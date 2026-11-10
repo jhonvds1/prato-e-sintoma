@@ -216,13 +216,31 @@ code { font-family: var(--font-mono); font-size: 13px; background: var(--bg); pa
   @keyframes rise { from { opacity: 0; transform: translate(-50%, 8px); } }
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+#authGate{max-width:420px;margin:10vh auto;padding:24px;background:var(--surface);border:1px solid var(--line);border-radius:16px;display:grid;gap:14px}
+#authGate h2{font-family:var(--font-display);font-size:24px}#authGate label{display:grid;gap:6px;color:var(--muted);font-size:13px;font-weight:600}
+#authGate input{width:100%;min-height:46px;padding:10px 12px;background:var(--bg);border:1px solid var(--line);border-radius:10px;color:var(--ink);font-size:16px}
+#authMsg{font-size:14px;color:var(--alert);min-height:20px}#appStatus{font-size:12px;color:var(--muted);margin-top:8px}#logoutBtn{float:right}
+body:not(.authenticated) main{display:none}
+</style>
 </head>
 <body>
 
 
+<section id="authGate">
+  <h2>Prato e Sintoma</h2>
+  <p>Entre com seu e-mail e senha para acessar seus registros sincronizados.</p>
+  <form id="loginForm">
+    <label>E-mail<input id="authEmail" type="email" autocomplete="username" required></label>
+    <label>Senha<input id="authPassword" type="password" autocomplete="current-password" required></label>
+    <button class="btn primary wide" type="submit" id="loginBtn">Entrar</button>
+  </form>
+  <p id="authMsg" role="alert"></p>
+</section>
 <main>
   <header class="top">
-    <div class="date" id="todayDate"></div>
+    <div class="date" id="todayDate"></div><div id="appStatus">Conectando ao banco… <button type="button" class="link" id="logoutBtn">Sair</button></div>
     <h1>Prato e Sintoma</h1>
     <p>Anote tudo o que você comer e beber, e como o estômago respondeu. Com alguns dias de registro dá para enxergar padrões.</p>
   </header>
@@ -327,7 +345,7 @@ code { font-family: var(--font-mono); font-size: 13px; background: var(--bg); pa
     </div>
     <div class="sheet">
       <h2>Restaurar backup</h2>
-      <p>Os dados ficam guardados neste aparelho. Se trocar de celular ou limpar o navegador, importe aqui o último backup .json.</p>
+      <p>Os dados são sincronizados com sua conta. Mantenha backups .json como cópia de segurança.</p>
       <label class="fld"><span>Arquivo de backup</span><input type="file" id="imp" accept=".json,application/json"></label>
       <p id="impMsg" role="status"></p>
     </div>
@@ -340,6 +358,10 @@ code { font-family: var(--font-mono); font-size: 13px; background: var(--bg); pa
 <script>
 (function () {
   var KEY = 'prato-e-sintoma:v1';
+  var SUPABASE_URL = 'https://chpyppisbjlzoytoneua.supabase.co';
+  var SUPABASE_KEY = 'sb_publishable_gdfu3r-9nf2Bnlhi1rbZMw_dxDJcvRQ';
+  var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  var currentUser = null, remoteIds = { meals: [], symptoms: [], days: [] }, saveQueue = Promise.resolve(), isLoadingRemote = false;
   var MEAL_TYPES = [['cafe','Café da manhã'],['lanche_manha','Lanche da manhã'],['almoco','Almoço'],['lanche_tarde','Lanche da tarde'],['jantar','Jantar'],['ceia','Ceia'],['outro','Outro']];
   var CATS = [['comida','Comida'],['bebida','Bebida'],['tempero','Molho / tempero'],['doce','Doce / sobremesa'],['remedio','Remédio / suplemento']];
   var PREPS = [['','Não se aplica'],['cru','Cru'],['cozido','Cozido'],['frito','Frito'],['grelhado_assado','Grelhado / assado'],['industrializado','Industrializado']];
@@ -412,7 +434,83 @@ code { font-family: var(--font-mono); font-size: 13px; background: var(--bg); pa
     }
   } catch (e) {}
   try { localStorage.setItem(KEY + ':t', '1'); localStorage.removeItem(KEY + ':t'); } catch (e) { storageOk = false; }
-  function persist() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { storageOk = false; renderNudge(); } }
+  function persist() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { storageOk = false; }
+    if (!currentUser || isLoadingRemote) return;
+    var snapshot = JSON.parse(JSON.stringify(state));
+    saveQueue = saveQueue.then(function () { return syncToSupabase(snapshot); }).catch(function (err) {
+      console.error('Erro ao sincronizar com Supabase:', err);
+      setStatus('Erro ao sincronizar. Seus dados continuam neste aparelho.');
+      toast('Não foi possível sincronizar. Verifique sua conexão.');
+    });
+  }
+  function setStatus(msg) { var el = $('#appStatus'); if (el) el.firstChild.textContent = msg + ' '; }
+  function checkError(result) { if (result.error) throw result.error; return result.data; }
+  function toMealRow(m) { return { id:m.id, user_id:currentUser.id, ts:m.ts.replace('T',' ') + ':00', meal_type:m.type, items:m.items, hunger:m.hunger || null, speed:m.speed || null, lay:!!m.lay, notes:m.notes || null }; }
+  function fromMealRow(m) { return { id:m.id, ts:String(m.ts).replace(' ','T').slice(0,16), type:m.meal_type, items:m.items || [], hunger:m.hunger || '', speed:m.speed || '', lay:!!m.lay, notes:m.notes || '' }; }
+  function toSymRow(x) { return { id:x.id, user_id:currentUser.id, ts:x.ts.replace('T',' ') + ':00', kinds:x.kinds, intensity:x.intensity, notes:x.notes || null }; }
+  function fromSymRow(x) { return { id:x.id, ts:String(x.ts).replace(' ','T').slice(0,16), kinds:x.kinds || [], intensity:x.intensity, notes:x.notes || '' }; }
+  function toDayRow(d) { return { user_id:currentUser.id, date:d.date, no_symptoms:!!d.none, sleep_hours:d.sleep, stress:d.stress || null, alcohol:!!d.alcohol, smoked:!!d.smoke, stomach_meds:d.meds || null, cycle_phase:d.cycle || null, notes:d.notes || null }; }
+  function fromDayRow(d) { return { date:d.date, none:!!d.no_symptoms, sleep:d.sleep_hours == null ? null : Number(d.sleep_hours), stress:d.stress || '', alcohol:!!d.alcohol, smoke:!!d.smoked, meds:d.stomach_meds || '', cycle:d.cycle_phase || '', notes:d.notes || '' }; }
+  async function syncToSupabase(data) {
+    var meals = data.meals.map(toMealRow), symptoms = data.symptoms.map(toSymRow), days = data.days.map(toDayRow);
+    if (meals.length) checkError(await sb.from('meals').upsert(meals, { onConflict:'id' }));
+    if (symptoms.length) checkError(await sb.from('symptoms').upsert(symptoms, { onConflict:'id' }));
+    if (days.length) checkError(await sb.from('days').upsert(days, { onConflict:'user_id,date' }));
+    var mealIds = data.meals.map(function(x){return x.id;}), symIds = data.symptoms.map(function(x){return x.id;}), dayDates = data.days.map(function(x){return x.date;});
+    var goneM = remoteIds.meals.filter(function(id){return mealIds.indexOf(id)<0;});
+    var goneS = remoteIds.symptoms.filter(function(id){return symIds.indexOf(id)<0;});
+    var goneD = remoteIds.days.filter(function(d){return dayDates.indexOf(d)<0;});
+    if (goneM.length) checkError(await sb.from('meals').delete().eq('user_id',currentUser.id).in('id',goneM));
+    if (goneS.length) checkError(await sb.from('symptoms').delete().eq('user_id',currentUser.id).in('id',goneS));
+    if (goneD.length) checkError(await sb.from('days').delete().eq('user_id',currentUser.id).in('date',goneD));
+    remoteIds = { meals:mealIds, symptoms:symIds, days:dayDates };
+    setStatus('Sincronizado com Supabase.');
+  }
+  async function loadCloudData() {
+    isLoadingRemote = true;
+    try {
+      var results = await Promise.all([
+        sb.from('meals').select('*').order('ts'),
+        sb.from('symptoms').select('*').order('ts'),
+        sb.from('days').select('*').order('date')
+      ]);
+      results.forEach(checkError);
+      var m=results[0].data||[], sy=results[1].data||[], d=results[2].data||[];
+      remoteIds = { meals:m.map(function(x){return x.id;}), symptoms:sy.map(function(x){return x.id;}), days:d.map(function(x){return x.date;}) };
+      if (m.length || sy.length || d.length) {
+        state = { meals:m.map(fromMealRow), symptoms:sy.map(fromSymRow), days:d.map(fromDayRow), meta:state.meta||{} };
+        localStorage.setItem(KEY, JSON.stringify(state));
+      } else if (state.meals.length || state.symptoms.length || state.days.length) {
+        setStatus('Migrando registros deste aparelho para a nuvem…');
+        isLoadingRemote = false;
+        await syncToSupabase(JSON.parse(JSON.stringify(state)));
+        isLoadingRemote = true;
+      }
+      resetMeal(); resetSym(); loadDay(todayStr()); renderAll();
+      setStatus('Dados sincronizados com Supabase.');
+    } finally { isLoadingRemote = false; }
+  }
+  async function startSession(session) {
+    if (currentUser && currentUser.id === session.user.id) return;
+    currentUser = session.user;
+    $('#authGate').hidden = true; document.body.classList.add('authenticated');
+    setStatus('Carregando seus registros…');
+    try { await loadCloudData(); }
+    catch (e) { console.error(e); setStatus('Falha ao carregar dados.'); toast('Erro ao carregar dados do Supabase.'); }
+  }
+  $('#loginForm').addEventListener('submit', async function(e){
+    e.preventDefault(); $('#authMsg').textContent=''; $('#loginBtn').disabled=true;
+    var result=await sb.auth.signInWithPassword({email:$('#authEmail').value.trim(),password:$('#authPassword').value});
+    $('#loginBtn').disabled=false;
+    if(result.error){$('#authMsg').textContent='Não foi possível entrar. Confira e-mail e senha.';return;}
+    await startSession(result.data.session);
+  });
+  $('#logoutBtn').addEventListener('click', async function(){ await saveQueue; await sb.auth.signOut(); currentUser=null; document.body.classList.remove('authenticated'); $('#authGate').hidden=false; });
+  sb.auth.onAuthStateChange(function(event, session){
+    if(event==='SIGNED_IN' && session && !currentUser) startSession(session);
+    if(event==='SIGNED_OUT'){currentUser=null;document.body.classList.remove('authenticated');$('#authGate').hidden=false;}
+  });
 
   /* Estado dos formulários */
   var editing = null;
@@ -805,6 +903,7 @@ code { font-family: var(--font-mono); font-size: 13px; background: var(--bg); pa
   var d0 = new Date();
   $('#todayDate').textContent = WD[d0.getDay()] + ', ' + pad(d0.getDate()) + '/' + pad(d0.getMonth() + 1);
   resetMeal(); resetSym(); loadDay(todayStr()); renderAll();
+  sb.auth.getSession().then(function(r){ if(r.data.session) startSession(r.data.session); else setStatus('Faça login para acessar seus dados.'); });
 })();
 </script>
 
