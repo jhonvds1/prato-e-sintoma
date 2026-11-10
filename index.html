@@ -552,6 +552,10 @@ body:not(.authenticated) main{display:none}
     $('#mealForm').hidden = kind !== 'meal';
     $('#symForm').hidden = kind !== 'sym';
     $('#dayForm').hidden = kind !== 'day';
+    if (kind === 'sym') {
+      var selected = Array.prototype.map.call(document.querySelectorAll('#mealSuggestions input:checked'), function (x) { return x.value; });
+      renderMealSuggestions(selected);
+    }
   }
   document.querySelectorAll('.seg button').forEach(function (b) {
     b.addEventListener('click', function () {
@@ -630,15 +634,34 @@ body:not(.authenticated) main{display:none}
   });
   $('#sInt').addEventListener('input', function () { $('#sOut').textContent = $('#sInt').value; });
   function renderMealSuggestions(selected) {
-    var box=$('#mealSuggestions'), ts=$('#sTs').value; box.replaceChildren();
-    if (!ts) { box.append(h('p',{class:'hint'},'Informe quando o sintoma começou para ver refeições anteriores.')); return; }
-    var end=new Date(ts).getTime(), start=end-24*60*60*1000;
-    var candidates=state.meals.filter(function(m){var t=new Date(m.ts).getTime();return t<=end && t>=start;}).sort(function(a,b){return a.ts<b.ts?1:-1;});
-    if (!candidates.length) { box.append(h('p',{class:'hint'},'Nenhuma refeição registrada nas 24 horas anteriores.')); return; }
-    candidates.forEach(function(m,idx){
-      var checked=(selected||[]).indexOf(m.id)>=0;
-      var foods=m.items.map(function(i){return i.name;}).join(', ');
-      var label=h('label',{class:'meal-choice'},h('input',{type:'checkbox',value:m.id,checked:checked}),h('span',null,h('strong',null,lab(MEAL_TYPES,m.type)+' · '+m.ts.slice(11,16)),h('small',null,foods),idx===0?h('small',null,'Refeição mais recente'):null));
+    var box = $('#mealSuggestions'), ts = $('#sTs').value;
+    box.replaceChildren();
+    if (!ts) {
+      box.append(h('p', { class: 'hint' }, 'Informe quando o sintoma começou para ver as refeições.'));
+      return;
+    }
+    if (!state.meals.length) {
+      box.append(h('p', { class: 'hint' }, 'Nenhuma refeição cadastrada ainda. Registre uma refeição para poder relacioná-la ao sintoma.'));
+      return;
+    }
+    // Mostra o histórico inteiro: refeições fora da janela de 24 horas também
+    // podem ser relacionadas manualmente. As anteriores aparecem primeiro.
+    var candidates = state.meals.slice().sort(function (a, b) {
+      var aBefore = a.ts <= ts, bBefore = b.ts <= ts;
+      if (aBefore !== bBefore) return aBefore ? -1 : 1;
+      return aBefore ? (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0) : (a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0);
+    });
+    candidates.forEach(function (m) {
+      var checked = (selected || []).indexOf(m.id) >= 0;
+      var foods = (m.items || []).map(function (i) { return i.name; }).join(', ');
+      var before = m.ts <= ts;
+      var mealDate = m.ts.slice(0, 10).split('-').reverse().join('/');
+      var label = h('label', { class: 'meal-choice' },
+        h('input', { type: 'checkbox', value: m.id, checked: checked }),
+        h('span', null,
+          h('strong', null, lab(MEAL_TYPES, m.type) + ' · ' + mealDate + ' às ' + m.ts.slice(11, 16)),
+          h('small', null, foods || 'Itens não informados'),
+          h('small', null, before ? 'Registrada antes do sintoma' : 'Registrada depois do horário do sintoma')));
       box.append(label);
     });
   }
