@@ -1,0 +1,812 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#C2477A">
+<style>[hidden]{display:none!important}</style>
+<title>Prato e Sintoma</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400..700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: coluna única pensada para o celular. Registrar, ver a linha do tempo do dia (prato e reação lado a lado) e exportar para o BI. */
+:root {
+  --bg: #FBF2F5;
+  --surface: #FFFFFF;
+  --ink: #3A1F2B;
+  --muted: #84606E;
+  --line: #EDD7DF;
+  --accent: #C2477A;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #F9DDE8;
+  --alert: #B94E14;
+  --alert-soft: #FBE6D8;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Figtree", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1D111A;
+    --surface: #291A24;
+    --ink: #F7E8EF;
+    --muted: #C3A1B1;
+    --line: #46303C;
+    --accent: #F08DB5;
+    --accent-ink: #3A0F22;
+    --accent-soft: #4A2336;
+    --alert: #F29A62;
+    --alert-soft: #43281A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1D111A;
+  --surface: #291A24;
+  --ink: #F7E8EF;
+  --muted: #C3A1B1;
+  --line: #46303C;
+  --accent: #F08DB5;
+  --accent-ink: #3A0F22;
+  --accent-soft: #4A2336;
+  --alert: #F29A62;
+  --alert-soft: #43281A;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.45;
+  padding-block: 8px 96px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--bg);
+  z-index: 10;
+}
+main { max-width: 640px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Cabeçalho */
+.top { padding: 20px 0 14px; }
+.top .date { font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.top h1 { font-size: 34px; font-weight: 700; letter-spacing: -.025em; line-height: 1.05; margin-top: 6px; }
+.top p { margin: 8px 0 0; color: var(--muted); max-width: 46ch; }
+
+/* Abas */
+.tabs {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  background: var(--bg); border-bottom: 1px solid var(--line);
+}
+.tabs button {
+  background: none; border: 0; padding: 14px 4px; min-height: 48px;
+  font-weight: 600; color: var(--muted); cursor: pointer;
+}
+.tabs button[aria-selected="true"] { color: var(--ink); box-shadow: inset 0 -3px 0 var(--accent); }
+
+section.tab { padding-top: 18px; display: grid; gap: 16px; }
+
+/* Faixa de hoje e avisos */
+.today { font-family: var(--font-mono); font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.today b { color: var(--ink); font-weight: 500; }
+.nudge { background: var(--alert-soft); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+.nudge button { margin-left: 4px; }
+
+/* Alternador Refeição / Sintoma */
+.seg { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.seg button { border: 0; background: none; padding: 12px; min-height: 46px; border-radius: 9px; font-weight: 600; cursor: pointer; color: var(--muted); }
+.seg button[aria-pressed="true"][data-kind="meal"] { background: var(--accent); color: var(--accent-ink); }
+.seg button[aria-pressed="true"][data-kind="sym"] { background: var(--alert); color: #fff; }
+.seg button[aria-pressed="true"][data-kind="day"] { background: var(--ink); color: var(--bg); }
+:root[data-theme="dark"] .seg button[aria-pressed="true"][data-kind="sym"] { color: #230E0A; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .seg button[aria-pressed="true"][data-kind="sym"] { color: #230E0A; } }
+
+/* Formulários */
+.sheet { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 14px; }
+.sheet h2 { font-size: 20px; font-weight: 650; letter-spacing: -.01em; }
+.sheet p { margin: 0; color: var(--muted); font-size: 15px; }
+.row2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.fld { display: grid; gap: 5px; min-width: 0; border: 0; padding: 0; margin: 0; }
+.fld > span, .fld > legend { font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); padding: 0; }
+input[type="text"], input[type="datetime-local"], input[type="date"], input[type="number"], select, textarea {
+  width: 100%; min-width: 0; min-height: 46px; padding: 10px 12px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 10px; font-size: 16px;
+}
+textarea { resize: vertical; }
+input[type="range"] { width: 100%; accent-color: var(--alert); min-height: 36px; }
+output { font-family: var(--font-mono); color: var(--ink); }
+.check { grid-template-columns: auto 1fr; align-items: center; gap: 10px; align-self: end; min-height: 46px; }
+.check > span { text-transform: none; letter-spacing: 0; font-size: 15px; font-weight: 500; color: var(--ink); }
+.check input { width: 22px; height: 22px; accent-color: var(--accent); margin: 0; }
+
+.items-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.items-head h3 { font-size: 17px; font-weight: 650; }
+#items { display: grid; gap: 10px; }
+.item { border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; background: var(--bg); }
+.item input[type="text"], .item select { background: var(--surface); }
+.name-row { grid-column: 1 / -1; display: flex; gap: 8px; }
+.name-row input { flex: 1; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { position: relative; }
+.chip input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.chip span { display: inline-block; padding: 10px 14px; min-height: 44px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); font-size: 15px; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--ink); }
+.chip input:checked + span { background: var(--alert-soft); border-color: var(--alert); color: var(--ink); font-weight: 650; }
+.chip input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Botões */
+.btn { border-radius: 10px; padding: 12px 16px; min-height: 48px; font-weight: 650; cursor: pointer; border: 1px solid var(--line); background: var(--surface); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.alert { background: var(--alert); color: #fff; border-color: var(--alert); }
+:root[data-theme="dark"] .btn.alert { color: #230E0A; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.alert { color: #230E0A; } }
+.btn.wide { width: 100%; }
+.btn[disabled] { opacity: .5; cursor: default; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.actions .btn.primary, .actions .btn.alert { flex: 1 1 200px; }
+.link { background: none; border: 0; padding: 6px 2px; min-height: 36px; color: var(--accent); font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.link.danger { color: var(--alert); }
+.icon { width: 46px; min-width: 46px; height: 46px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-size: 22px; line-height: 1; cursor: pointer; color: var(--muted); }
+.err { color: var(--alert); font-weight: 600; font-size: 14px; }
+
+/* Histórico: linha do tempo do dia */
+.day { margin-top: 6px; }
+.day-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.day-head h3 { font-size: 19px; font-weight: 650; }
+.day-head small { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.daymeta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; padding-top: 8px; font-size: 13px; color: var(--muted); }
+.daymeta .tag { margin-left: 0; color: var(--ink); }
+.tl { list-style: none; margin: 0; padding: 14px 0 0; }
+.ev { display: grid; grid-template-columns: 48px 14px minmax(0, 1fr); column-gap: 10px; padding-bottom: 18px; }
+.ev .tm { font-family: var(--font-mono); font-size: 13px; color: var(--muted); padding-top: 1px; text-align: right; }
+.rail { position: relative; }
+.rail::before { content: ""; position: absolute; left: 50%; top: 6px; bottom: -18px; width: 2px; background: var(--line); transform: translateX(-50%); }
+.ev:last-child .rail::before { display: none; }
+.rail i { position: absolute; top: 4px; left: 50%; width: 11px; height: 11px; transform: translateX(-50%); background: var(--accent); border-radius: 50%; }
+.ev.sym .rail i { background: var(--alert); border-radius: 2px; transform: translateX(-50%) rotate(45deg); }
+.ev-title { display: flex; flex-wrap: wrap; gap: 2px 10px; align-items: baseline; }
+.ev-title strong { font-family: var(--font-display); font-size: 17px; font-weight: 650; }
+.ev.sym .ev-title strong { color: var(--alert); }
+.ev ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; }
+.ev li .nm { font-weight: 600; }
+.ev li .q { color: var(--muted); }
+.tag { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); font-size: 12px; font-weight: 600; }
+.meta { margin-top: 6px; font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.note { margin-top: 6px; font-size: 14px; font-style: italic; color: var(--muted); }
+.scale { display: inline-flex; gap: 3px; align-items: center; }
+.scale span { width: 8px; height: 16px; border-radius: 2px; background: var(--line); }
+.scale span.on { background: var(--alert); }
+.ev-actions { display: flex; gap: 14px; margin-top: 4px; }
+.empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 14px; padding: 28px 20px; display: grid; gap: 10px; justify-items: start; }
+.empty h3 { font-size: 20px; }
+.empty p { margin: 0; color: var(--muted); max-width: 40ch; }
+
+/* Exportar */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 12px; margin: 0; }
+.stats div { display: grid; gap: 2px; }
+.stats dt { font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.stats dd { margin: 0; font-family: var(--font-display); font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stack { display: grid; gap: 10px; }
+code { font-family: var(--font-mono); font-size: 13px; background: var(--bg); padding: 1px 5px; border-radius: 5px; }
+#fbText { font-family: var(--font-mono); font-size: 12px; min-height: 160px; }
+.foot { font-size: 13px; color: var(--muted); margin: 0; }
+
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 999px;
+  font-weight: 600; z-index: 20; max-width: calc(100vw - 32px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .toast { animation: rise .18s ease-out; }
+  @keyframes rise { from { opacity: 0; transform: translate(-50%, 8px); } }
+}
+</style>
+</head>
+<body>
+
+
+<main>
+  <header class="top">
+    <div class="date" id="todayDate"></div>
+    <h1>Prato e Sintoma</h1>
+    <p>Anote tudo o que você comer e beber, e como o estômago respondeu. Com alguns dias de registro dá para enxergar padrões.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Seções">
+    <button role="tab" id="t-reg" aria-selected="true" data-tab="reg">Registrar</button>
+    <button role="tab" id="t-hist" aria-selected="false" data-tab="hist">Histórico</button>
+    <button role="tab" id="t-exp" aria-selected="false" data-tab="exp">Exportar</button>
+  </nav>
+
+  <section class="tab" id="tab-reg" role="tabpanel" aria-labelledby="t-reg">
+    <div class="today" id="todaySum"></div>
+    <div class="nudge" id="nudge" hidden></div>
+
+    <div class="seg" role="group" aria-label="O que registrar">
+      <button type="button" data-kind="meal" aria-pressed="true">Refeição</button>
+      <button type="button" data-kind="sym" aria-pressed="false">Sintoma</button>
+      <button type="button" data-kind="day" aria-pressed="false">Dia</button>
+    </div>
+
+    <form id="mealForm" class="sheet" novalidate>
+      <div class="row2">
+        <label class="fld"><span>Quando</span><input type="datetime-local" id="mTs"></label>
+        <label class="fld"><span>Refeição</span><select id="mType"></select></label>
+      </div>
+      <label class="fld"><span>Estava com fome?</span><select id="mHunger"></select></label>
+      <div class="items-head">
+        <h3>O que você comeu e bebeu</h3>
+        <button type="button" class="link" id="repeatBtn">Repetir a última</button>
+      </div>
+      <div id="items"></div>
+      <datalist id="foodList"></datalist>
+      <button type="button" class="btn wide" id="addItem">+ Adicionar item</button>
+      <div class="row2">
+        <label class="fld"><span>Velocidade ao comer</span><select id="mSpeed"></select></label>
+        <label class="fld check"><input type="checkbox" id="mLay"><span>Deitei em até 2 h depois</span></label>
+      </div>
+      <label class="fld"><span>Observações</span><textarea id="mNotes" rows="2" placeholder="Ex.: comi com pressa, estava estressada"></textarea></label>
+      <p class="err" id="mErr" role="alert" hidden></p>
+      <div class="actions">
+        <button type="submit" class="btn primary" id="mSave">Salvar refeição</button>
+        <button type="button" class="btn" id="mCancel" hidden>Cancelar edição</button>
+      </div>
+    </form>
+
+    <form id="symForm" class="sheet" novalidate hidden>
+      <label class="fld"><span>Quando começou</span><input type="datetime-local" id="sTs"></label>
+      <fieldset class="fld"><legend>O que você sentiu</legend><div class="chips" id="chips"></div></fieldset>
+      <label class="fld"><span>Intensidade: <output id="sOut">5</output> de 10</span><input type="range" id="sInt" min="1" max="10" value="5"></label>
+      <label class="fld"><span>Observações</span><textarea id="sNotes" rows="2" placeholder="Ex.: durou cerca de 40 minutos"></textarea></label>
+      <p class="err" id="sErr" role="alert" hidden></p>
+      <div class="actions">
+        <button type="submit" class="btn alert" id="sSave">Salvar sintoma</button>
+        <button type="button" class="btn" id="sCancel" hidden>Cancelar edição</button>
+      </div>
+    </form>
+
+    <form id="dayForm" class="sheet" novalidate hidden>
+      <p>Feche o dia à noite. Dias sem sintomas também contam para a análise.</p>
+      <label class="fld"><span>Dia</span><input type="date" id="dDate"></label>
+      <label class="fld check"><input type="checkbox" id="dNone"><span>Não senti nenhum sintoma neste dia</span></label>
+      <div class="row2">
+        <label class="fld"><span>Horas de sono (noite anterior)</span><input type="number" id="dSleep" min="0" max="24" step="0.5" inputmode="decimal" placeholder="Ex.: 7"></label>
+        <label class="fld"><span>Estresse no dia</span><select id="dStress"></select></label>
+      </div>
+      <div class="row2">
+        <label class="fld check"><input type="checkbox" id="dAlcohol"><span>Bebi álcool</span></label>
+        <label class="fld check"><input type="checkbox" id="dSmoke"><span>Fumei</span></label>
+      </div>
+      <label class="fld"><span>Remédios para o estômago</span><input type="text" id="dMeds" placeholder="Ex.: omeprazol de manhã" autocomplete="off"></label>
+      <label class="fld"><span>Fase do ciclo</span><select id="dCycle"></select></label>
+      <label class="fld"><span>Observações</span><textarea id="dNotes" rows="2" placeholder="Ex.: dia corrido, jantei tarde"></textarea></label>
+      <p class="err" id="dErr" role="alert" hidden></p>
+      <div class="actions"><button type="submit" class="btn primary" id="dSave">Salvar dia</button></div>
+    </form>
+  </section>
+
+  <section class="tab" id="tab-hist" role="tabpanel" aria-labelledby="t-hist" hidden>
+    <div id="hist"></div>
+  </section>
+
+  <section class="tab" id="tab-exp" role="tabpanel" aria-labelledby="t-exp" hidden>
+    <div class="sheet">
+      <h2>Seus registros</h2>
+      <dl class="stats" id="stats"></dl>
+      <p id="lastExp"></p>
+    </div>
+    <div class="sheet">
+      <h2>Exportar para o BI</h2>
+      <p><code>refeicoes.csv</code> tem uma linha por item comido (<code>meal_id</code> liga os itens da mesma refeição). <code>sintomas.csv</code> tem uma linha por sintoma. <code>dias.csv</code> tem uma linha por dia, com sono, estresse e se foi um dia sem sintomas. Cruze pelos horários e pela data.</p>
+      <div class="stack">
+        <button type="button" class="btn primary" id="expMeals">Baixar refeicoes.csv</button>
+        <button type="button" class="btn primary" id="expSym">Baixar sintomas.csv</button>
+        <button type="button" class="btn primary" id="expDays">Baixar dias.csv</button>
+        <button type="button" class="btn" id="expJson">Baixar backup (.json)</button>
+      </div>
+      <div id="fallback" class="stack" hidden>
+        <p>O download direto não está disponível aqui. Copie o texto abaixo e cole em um arquivo <b id="fbName"></b>.</p>
+        <textarea id="fbText" readonly></textarea>
+        <button type="button" class="btn" id="fbCopy">Copiar texto</button>
+      </div>
+    </div>
+    <div class="sheet">
+      <h2>Restaurar backup</h2>
+      <p>Os dados ficam guardados neste aparelho. Se trocar de celular ou limpar o navegador, importe aqui o último backup .json.</p>
+      <label class="fld"><span>Arquivo de backup</span><input type="file" id="imp" accept=".json,application/json"></label>
+      <p id="impMsg" role="status"></p>
+    </div>
+    <p class="foot">Este diário organiza informações para você e para sua equipe de saúde. Não substitui avaliação médica. Se algum sintoma for forte ou diferente do habitual, procure atendimento.</p>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function () {
+  var KEY = 'prato-e-sintoma:v1';
+  var MEAL_TYPES = [['cafe','Café da manhã'],['lanche_manha','Lanche da manhã'],['almoco','Almoço'],['lanche_tarde','Lanche da tarde'],['jantar','Jantar'],['ceia','Ceia'],['outro','Outro']];
+  var CATS = [['comida','Comida'],['bebida','Bebida'],['tempero','Molho / tempero'],['doce','Doce / sobremesa'],['remedio','Remédio / suplemento']];
+  var PREPS = [['','Não se aplica'],['cru','Cru'],['cozido','Cozido'],['frito','Frito'],['grelhado_assado','Grelhado / assado'],['industrializado','Industrializado']];
+  var SPEEDS = [['','Não informar'],['rapido','Rápido'],['normal','Normal'],['devagar','Devagar']];
+  var SYMPTOMS = [['azia','Azia / queimação'],['regurgitacao','Regurgitação'],['dor_estomago','Dor no estômago'],['nausea','Náusea'],['estufamento','Estufamento / gases'],['arroto','Arroto excessivo'],['gosto_acido','Gosto ácido na boca'],['tosse_rouquidao','Tosse ou rouquidão'],['outro','Outro']];
+  var HUNGER = [['','Não informar'],['sem_fome','Sem fome'],['pouca_fome','Pouca fome'],['com_fome','Com fome'],['muita_fome','Muita fome']];
+  var PORTIONS = [['','Não informar'],['pequena','Pequena'],['media','Média'],['grande','Grande']];
+  var STRESS = [['','Não informar'],['baixo','Baixo'],['medio','Médio'],['alto','Alto']];
+  var CYCLE = [['','Não informar'],['menstruada','Menstruada'],['tpm','Pré-menstrual (TPM)'],['outro','Outro período']];
+  var WD = ['dom','seg','ter','qua','qui','sex','sáb'];
+
+  function lab(list, v) { for (var i = 0; i < list.length; i++) if (list[i][0] === v) return list[i][1]; return v; }
+  function $(s, r) { return (r || document).querySelector(s); }
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function nowLocal() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function h(tag, attrs) {
+    var e = document.createElement(tag), a = attrs || {};
+    for (var k in a) {
+      var v = a[k];
+      if (v === false || v == null) continue;
+      if (k === 'class') e.className = v;
+      else if (k === 'text') e.textContent = v;
+      else if (k.indexOf('on') === 0) e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v === true ? '' : v);
+    }
+    for (var i = 2; i < arguments.length; i++) {
+      var kids = [].concat(arguments[i]);
+      for (var j = 0; j < kids.length; j++) {
+        var c = kids[j];
+        if (c == null || c === false) continue;
+        e.append(c.nodeType ? c : document.createTextNode(c));
+      }
+    }
+    return e;
+  }
+  function fillSelect(sel, list) { list.forEach(function (o) { sel.append(h('option', { value: o[0] }, o[1])); }); }
+  function makeSel(list, value, on) {
+    var s = h('select'); fillSelect(s, list); s.value = value;
+    s.addEventListener('change', function () { on(s.value); });
+    return s;
+  }
+  function dayLabel(date) {
+    var p = date.split('-').map(Number), dt = new Date(p[0], p[1] - 1, p[2]);
+    var y = new Date(); y.setDate(y.getDate() - 1);
+    var ys = y.getFullYear() + '-' + pad(y.getMonth() + 1) + '-' + pad(y.getDate());
+    var base = WD[dt.getDay()] + ', ' + pad(p[2]) + '/' + pad(p[1]);
+    if (date === nowLocal().slice(0, 10)) return 'Hoje · ' + base;
+    if (date === ys) return 'Ontem · ' + base;
+    return base;
+  }
+  function guessType(ts) {
+    var t = +ts.slice(11, 13) + (+ts.slice(14, 16)) / 60;
+    if (t >= 5 && t < 9.5) return 'cafe';
+    if (t >= 9.5 && t < 11.5) return 'lanche_manha';
+    if (t >= 11.5 && t < 15) return 'almoco';
+    if (t >= 15 && t < 18) return 'lanche_tarde';
+    if (t >= 18 && t < 22) return 'jantar';
+    return 'ceia';
+  }
+
+  /* Estado e armazenamento */
+  var state = { meals: [], symptoms: [], days: [], meta: {} };
+  var storageOk = true;
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && Array.isArray(p.meals) && Array.isArray(p.symptoms)) state = { meals: p.meals, symptoms: p.symptoms, days: Array.isArray(p.days) ? p.days : [], meta: p.meta || {} };
+    }
+  } catch (e) {}
+  try { localStorage.setItem(KEY + ':t', '1'); localStorage.removeItem(KEY + ':t'); } catch (e) { storageOk = false; }
+  function persist() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { storageOk = false; renderNudge(); } }
+
+  /* Estado dos formulários */
+  var editing = null;
+  var mealDraft = [];
+  function newItem() { return { name: '', qty: '', cat: 'comida', prep: '', portion: '' }; }
+
+  var toastTimer;
+  function toast(msg) {
+    var t = $('#toast'); t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 2600);
+  }
+  function showErr(id, msg) { var e = $(id); e.textContent = msg; e.hidden = !msg; }
+
+  /* Abas */
+  function go(tab) {
+    ['reg', 'hist', 'exp'].forEach(function (t) {
+      $('#tab-' + t).hidden = t !== tab;
+      $('#t-' + t).setAttribute('aria-selected', String(t === tab));
+    });
+    if (tab === 'hist') renderHist();
+    if (tab === 'exp') renderStats();
+    if (tab === 'reg') renderToday();
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll('.tabs button').forEach(function (b) { b.addEventListener('click', function () { go(b.dataset.tab); }); });
+
+  function setKind(kind) {
+    document.querySelectorAll('.seg button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.kind === kind)); });
+    $('#mealForm').hidden = kind !== 'meal';
+    $('#symForm').hidden = kind !== 'sym';
+    $('#dayForm').hidden = kind !== 'day';
+  }
+  document.querySelectorAll('.seg button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (editing && editing.k !== b.dataset.kind) cancelEdit();
+      setKind(b.dataset.kind);
+    });
+  });
+
+  /* Formulário de refeição */
+  fillSelect($('#mType'), MEAL_TYPES);
+  fillSelect($('#mSpeed'), SPEEDS);
+  fillSelect($('#mHunger'), HUNGER);
+  fillSelect($('#dStress'), STRESS);
+  fillSelect($('#dCycle'), CYCLE);
+
+  function renderItems() {
+    var box = $('#items'); box.replaceChildren();
+    mealDraft.forEach(function (it, idx) {
+      var name = h('input', { type: 'text', placeholder: 'Ex.: arroz branco', list: 'foodList', autocomplete: 'off', 'aria-label': 'Item ' + (idx + 1) });
+      name.value = it.name;
+      name.addEventListener('input', function () { it.name = name.value; });
+      var rm = h('button', { type: 'button', class: 'icon', 'aria-label': 'Remover item ' + (idx + 1) }, '×');
+      rm.addEventListener('click', function () {
+        if (mealDraft.length > 1) mealDraft.splice(idx, 1); else mealDraft[0] = newItem();
+        renderItems();
+      });
+      var qty = h('input', { type: 'text', placeholder: 'Ex.: 1 prato, 2 fatias, 200 ml', autocomplete: 'off' });
+      qty.value = it.qty;
+      qty.addEventListener('input', function () { it.qty = qty.value; });
+      box.append(h('div', { class: 'item' },
+        h('div', { class: 'name-row' }, name, rm),
+        h('label', { class: 'fld' }, h('span', null, 'Quantidade'), qty),
+        h('label', { class: 'fld' }, h('span', null, 'Tipo'), makeSel(CATS, it.cat, function (v) { it.cat = v; })),
+        h('label', { class: 'fld' }, h('span', null, 'Preparo'), makeSel(PREPS, it.prep, function (v) { it.prep = v; })),
+        h('label', { class: 'fld' }, h('span', null, 'Porção'), makeSel(PORTIONS, it.portion || '', function (v) { it.portion = v; }))
+      ));
+    });
+  }
+  function resetMeal() {
+    var ts = nowLocal();
+    $('#mTs').value = ts; $('#mType').value = guessType(ts); $('#mSpeed').value = ''; $('#mHunger').value = '';
+    $('#mLay').checked = false; $('#mNotes').value = '';
+    mealDraft = [newItem()]; renderItems(); showErr('#mErr', '');
+    $('#mSave').textContent = 'Salvar refeição'; $('#mCancel').hidden = true;
+  }
+  $('#addItem').addEventListener('click', function () {
+    mealDraft.push(newItem()); renderItems();
+    var last = $('#items').lastElementChild; if (last) last.querySelector('input').focus();
+  });
+  $('#mTs').addEventListener('change', function () { if (!editing && $('#mTs').value) $('#mType').value = guessType($('#mTs').value); });
+  $('#repeatBtn').addEventListener('click', function () {
+    var type = $('#mType').value;
+    var sorted = state.meals.slice().sort(function (a, b) { return a.ts < b.ts ? 1 : -1; });
+    var src = sorted.filter(function (m) { return m.type === type; })[0] || sorted[0];
+    if (!src) { toast('Ainda não há refeição anterior.'); return; }
+    mealDraft = src.items.map(function (i) { return { name: i.name, qty: i.qty, cat: i.cat, prep: i.prep, portion: i.portion || '' }; });
+    renderItems(); toast('Itens copiados. Ajuste o que for diferente.');
+  });
+  $('#mealForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var ts = $('#mTs').value;
+    var items = mealDraft.map(function (i) { return { name: i.name.trim(), qty: i.qty.trim(), cat: i.cat, prep: i.prep, portion: i.portion || '' }; }).filter(function (i) { return i.name; });
+    if (!ts) { showErr('#mErr', 'Informe o horário da refeição.'); return; }
+    if (!items.length) { showErr('#mErr', 'Adicione pelo menos um item com nome.'); return; }
+    var isEdit = editing && editing.k === 'meal';
+    var rec = { id: isEdit ? editing.id : uid(), ts: ts, type: $('#mType').value, items: items, hunger: $('#mHunger').value, speed: $('#mSpeed').value, lay: $('#mLay').checked, notes: $('#mNotes').value.trim() };
+    if (isEdit) state.meals = state.meals.map(function (m) { return m.id === rec.id ? rec : m; }); else state.meals.push(rec);
+    persist(); editing = null; resetMeal(); renderAll();
+    toast(isEdit ? 'Refeição atualizada.' : 'Refeição salva.');
+  });
+  $('#mCancel').addEventListener('click', function () { cancelEdit(); });
+
+  /* Formulário de sintoma */
+  SYMPTOMS.forEach(function (s) {
+    $('#chips').append(h('label', { class: 'chip' }, h('input', { type: 'checkbox', value: s[0] }), h('span', null, s[1])));
+  });
+  $('#sInt').addEventListener('input', function () { $('#sOut').textContent = $('#sInt').value; });
+  function resetSym() {
+    $('#sTs').value = nowLocal(); $('#sInt').value = 5; $('#sOut').textContent = '5'; $('#sNotes').value = '';
+    document.querySelectorAll('#chips input').forEach(function (c) { c.checked = false; });
+    showErr('#sErr', ''); $('#sSave').textContent = 'Salvar sintoma'; $('#sCancel').hidden = true;
+  }
+  $('#symForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var ts = $('#sTs').value;
+    var kinds = Array.prototype.map.call(document.querySelectorAll('#chips input:checked'), function (c) { return c.value; });
+    if (!ts) { showErr('#sErr', 'Informe quando o sintoma começou.'); return; }
+    if (!kinds.length) { showErr('#sErr', 'Marque pelo menos um sintoma.'); return; }
+    var isEdit = editing && editing.k === 'sym';
+    var rec = { id: isEdit ? editing.id : uid(), ts: ts, kinds: kinds, intensity: +$('#sInt').value, notes: $('#sNotes').value.trim() };
+    if (isEdit) state.symptoms = state.symptoms.map(function (s) { return s.id === rec.id ? rec : s; }); else state.symptoms.push(rec);
+    var dr = getDay(ts.slice(0, 10)), cleared = !!(dr && dr.none);
+    if (cleared) dr.none = false;
+    persist(); editing = null; resetSym(); renderAll();
+    if (cleared) loadDay($('#dDate').value || todayStr());
+    toast(isEdit ? 'Sintoma atualizado.' : 'Sintoma salvo.');
+  });
+  $('#sCancel').addEventListener('click', function () { cancelEdit(); });
+
+  /* Fechamento do dia */
+  function todayStr() { return nowLocal().slice(0, 10); }
+  function getDay(date) { return state.days.filter(function (d) { return d.date === date; })[0]; }
+  function loadDay(date) {
+    var d = getDay(date) || {};
+    $('#dDate').value = date;
+    $('#dNone').checked = !!d.none; $('#dSleep').value = d.sleep == null ? '' : d.sleep;
+    $('#dStress').value = d.stress || ''; $('#dAlcohol').checked = !!d.alcohol; $('#dSmoke').checked = !!d.smoke;
+    $('#dMeds').value = d.meds || ''; $('#dCycle').value = d.cycle || ''; $('#dNotes').value = d.notes || '';
+    showErr('#dErr', ''); $('#dSave').textContent = getDay(date) ? 'Atualizar dia' : 'Salvar dia';
+  }
+  $('#dDate').addEventListener('change', function () { if ($('#dDate').value) loadDay($('#dDate').value); });
+  $('#dayForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var date = $('#dDate').value;
+    if (!date) { showErr('#dErr', 'Escolha o dia.'); return; }
+    var none = $('#dNone').checked;
+    if (none && state.symptoms.some(function (s) { return s.ts.slice(0, 10) === date; })) { showErr('#dErr', 'Já existe sintoma registrado neste dia. Desmarque "Não senti nenhum sintoma".'); return; }
+    var sl = $('#dSleep').value === '' ? null : parseFloat($('#dSleep').value);
+    if (sl !== null && (isNaN(sl) || sl < 0 || sl > 24)) { showErr('#dErr', 'As horas de sono devem estar entre 0 e 24.'); return; }
+    var rec = { date: date, none: none, sleep: sl, stress: $('#dStress').value, alcohol: $('#dAlcohol').checked, smoke: $('#dSmoke').checked, meds: $('#dMeds').value.trim(), cycle: $('#dCycle').value, notes: $('#dNotes').value.trim() };
+    var existed = !!getDay(date);
+    state.days = state.days.filter(function (d) { return d.date !== date; }).concat([rec]);
+    persist(); renderAll(); loadDay(date);
+    toast(existed ? 'Dia atualizado.' : 'Dia salvo.');
+  });
+  function openDay(date) { if (editing) cancelEdit(); setKind('day'); loadDay(date); go('reg'); }
+  function dayMeta(day) {
+    var d = getDay(day), bits = [], box = h('div', { class: 'daymeta' });
+    if (d) {
+      if (d.none) box.append(h('span', { class: 'tag' }, 'Sem sintomas'));
+      if (d.sleep != null) bits.push('Sono ' + String(d.sleep).replace('.', ',') + ' h');
+      if (d.stress) bits.push('Estresse ' + lab(STRESS, d.stress).toLowerCase());
+      if (d.alcohol) bits.push('Álcool');
+      if (d.smoke) bits.push('Fumou');
+      if (d.meds) bits.push('Remédio: ' + d.meds);
+      if (d.cycle) bits.push(lab(CYCLE, d.cycle));
+      if (bits.length) box.append(h('span', null, bits.join(' · ')));
+      box.append(h('button', { type: 'button', class: 'link', onclick: function () { openDay(day); } }, 'Editar dia'));
+    } else if (day <= todayStr()) {
+      box.append(h('span', null, 'Dia ainda não fechado.'), h('button', { type: 'button', class: 'link', onclick: function () { openDay(day); } }, 'Fechar o dia'));
+    }
+    return box;
+  }
+
+  function cancelEdit() { editing = null; resetMeal(); resetSym(); }
+  function editMeal(id) {
+    var m = state.meals.filter(function (x) { return x.id === id; })[0]; if (!m) return;
+    editing = { k: 'meal', id: id };
+    mealDraft = m.items.map(function (i) { return { name: i.name, qty: i.qty || '', cat: i.cat || 'comida', prep: i.prep || '', portion: i.portion || '' }; });
+    $('#mTs').value = m.ts; $('#mType').value = m.type; $('#mSpeed').value = m.speed || ''; $('#mHunger').value = m.hunger || '';
+    $('#mLay').checked = !!m.lay; $('#mNotes').value = m.notes || '';
+    renderItems(); showErr('#mErr', '');
+    $('#mSave').textContent = 'Atualizar refeição'; $('#mCancel').hidden = false;
+    setKind('meal'); go('reg');
+  }
+  function editSym(id) {
+    var s = state.symptoms.filter(function (x) { return x.id === id; })[0]; if (!s) return;
+    editing = { k: 'sym', id: id };
+    $('#sTs').value = s.ts; $('#sInt').value = s.intensity; $('#sOut').textContent = String(s.intensity); $('#sNotes').value = s.notes || '';
+    document.querySelectorAll('#chips input').forEach(function (c) { c.checked = s.kinds.indexOf(c.value) >= 0; });
+    showErr('#sErr', ''); $('#sSave').textContent = 'Atualizar sintoma'; $('#sCancel').hidden = false;
+    setKind('sym'); go('reg');
+  }
+
+  /* Histórico */
+  function delBtn(onConfirm) {
+    var b = h('button', { type: 'button', class: 'link danger' }, 'Excluir'), t;
+    b.addEventListener('click', function () {
+      if (b.dataset.arm) { clearTimeout(t); onConfirm(); return; }
+      b.dataset.arm = '1'; b.textContent = 'Confirmar exclusão';
+      t = setTimeout(function () { delete b.dataset.arm; b.textContent = 'Excluir'; }, 4000);
+    });
+    return b;
+  }
+  function mealNode(m) {
+    var lis = m.items.map(function (i) {
+      return h('li', null,
+        h('span', { class: 'nm' }, i.name),
+        i.qty ? h('span', { class: 'q' }, ' · ' + i.qty) : null,
+        i.cat && i.cat !== 'comida' ? h('span', { class: 'tag' }, lab(CATS, i.cat)) : null,
+        i.prep ? h('span', { class: 'tag' }, lab(PREPS, i.prep)) : null,
+        i.portion ? h('span', { class: 'tag' }, 'Porção ' + lab(PORTIONS, i.portion).toLowerCase()) : null);
+    });
+    var metaBits = [];
+    if (m.hunger) metaBits.push('Antes: ' + lab(HUNGER, m.hunger).toLowerCase());
+    if (m.speed) metaBits.push('Comeu ' + lab(SPEEDS, m.speed).toLowerCase());
+    if (m.lay) metaBits.push('Deitou em até 2 h');
+    return h('li', { class: 'ev meal' },
+      h('div', { class: 'tm' }, m.ts.slice(11, 16)),
+      h('div', { class: 'rail' }, h('i')),
+      h('div', null,
+        h('div', { class: 'ev-title' }, h('strong', null, lab(MEAL_TYPES, m.type))),
+        h('ul', null, lis),
+        metaBits.length ? h('div', { class: 'meta' }, metaBits.map(function (x) { return h('span', null, x); })) : null,
+        m.notes ? h('div', { class: 'note' }, m.notes) : null,
+        h('div', { class: 'ev-actions' },
+          h('button', { type: 'button', class: 'link', onclick: function () { editMeal(m.id); } }, 'Editar'),
+          delBtn(function () { state.meals = state.meals.filter(function (x) { return x.id !== m.id; }); persist(); renderAll(); toast('Refeição excluída.'); }))));
+  }
+  function symNode(s) {
+    var scale = h('span', { class: 'scale', 'aria-label': 'Intensidade ' + s.intensity + ' de 10' });
+    for (var n = 1; n <= 10; n++) scale.append(h('span', { class: n <= s.intensity ? 'on' : '' }));
+    return h('li', { class: 'ev sym' },
+      h('div', { class: 'tm' }, s.ts.slice(11, 16)),
+      h('div', { class: 'rail' }, h('i')),
+      h('div', null,
+        h('div', { class: 'ev-title' }, h('strong', null, s.kinds.map(function (k) { return lab(SYMPTOMS, k); }).join(', '))),
+        h('div', { class: 'meta' }, scale, h('span', null, s.intensity + '/10')),
+        s.notes ? h('div', { class: 'note' }, s.notes) : null,
+        h('div', { class: 'ev-actions' },
+          h('button', { type: 'button', class: 'link', onclick: function () { editSym(s.id); } }, 'Editar'),
+          delBtn(function () { state.symptoms = state.symptoms.filter(function (x) { return x.id !== s.id; }); persist(); renderAll(); toast('Sintoma excluído.'); }))));
+  }
+  function renderHist() {
+    var box = $('#hist'); box.replaceChildren();
+    var ev = state.meals.map(function (m) { return { k: 'meal', ts: m.ts, o: m }; })
+      .concat(state.symptoms.map(function (s) { return { k: 'sym', ts: s.ts, o: s }; }));
+    if (!ev.length && !state.days.length) {
+      box.append(h('div', { class: 'empty' },
+        h('h3', null, 'Nada registrado ainda'),
+        h('p', null, 'Comece pela primeira refeição do dia. Quanto mais detalhe, melhor a análise depois.'),
+        h('button', { type: 'button', class: 'btn primary', onclick: function () { go('reg'); } }, 'Registrar agora')));
+      return;
+    }
+    var byDay = {};
+    ev.forEach(function (e) { var d = e.ts.slice(0, 10); (byDay[d] = byDay[d] || []).push(e); });
+    state.days.forEach(function (d) { byDay[d.date] = byDay[d.date] || []; });
+    Object.keys(byDay).sort().reverse().forEach(function (day) {
+      var list = byDay[day].sort(function (a, b) { return a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0; });
+      var nm = list.filter(function (e) { return e.k === 'meal'; }).length, ns = list.length - nm;
+      box.append(h('div', { class: 'day' },
+        h('div', { class: 'day-head' }, h('h3', null, dayLabel(day)), h('small', null, nm + ' refeições · ' + ns + ' sintomas')),
+        dayMeta(day),
+        list.length ? h('ul', { class: 'tl' }, list.map(function (e) { return e.k === 'meal' ? mealNode(e.o) : symNode(e.o); })) : null));
+    });
+  }
+
+  /* Hoje, avisos e lista de alimentos */
+  function renderToday() {
+    var today = nowLocal().slice(0, 10);
+    var ms = state.meals.filter(function (m) { return m.ts.slice(0, 10) === today; });
+    var its = ms.reduce(function (n, m) { return n + m.items.length; }, 0);
+    var ss = state.symptoms.filter(function (s) { return s.ts.slice(0, 10) === today; }).length;
+    var box = $('#todaySum'); box.replaceChildren(
+      h('span', null, 'Hoje'), h('span', null, h('b', null, ms.length), ' refeições'), h('span', null, h('b', null, its), ' itens'), h('span', null, h('b', null, ss), ' sintomas'), h('span', null, getDay(today) ? 'dia fechado' : 'dia aberto'));
+  }
+  function daysSince(ts) {
+    var p = ts.slice(0, 10).split('-').map(Number);
+    return Math.floor((Date.now() - new Date(p[0], p[1] - 1, p[2]).getTime()) / 86400000);
+  }
+  function renderNudge() {
+    var n = $('#nudge'), total = state.meals.length + state.symptoms.length;
+    var go2 = h('button', { type: 'button', class: 'link', onclick: function () { go('exp'); } }, 'Exportar agora');
+    if (!storageOk) {
+      n.replaceChildren('Este navegador não está guardando os dados. Exporte um backup com frequência.', go2); n.hidden = false;
+    } else if (nowLocal().slice(11, 13) >= '18' && !getDay(todayStr()) && state.meals.concat(state.symptoms).some(function (x) { return x.ts.slice(0, 10) === todayStr(); })) {
+      n.replaceChildren('Feche o dia: conte se teve sintomas e como foram o sono e o estresse. ', h('button', { type: 'button', class: 'link', onclick: function () { openDay(todayStr()); } }, 'Fechar o dia')); n.hidden = false;
+    } else if (total >= 5 && (!state.meta.lastExport || daysSince(state.meta.lastExport) >= 7)) {
+      n.replaceChildren(state.meta.lastExport ? 'Faz mais de 7 dias desde o último backup.' : 'Você ainda não fez nenhum backup.', go2); n.hidden = false;
+    } else { n.hidden = true; }
+  }
+  function renderFoodList() {
+    var seen = {}, dl = $('#foodList'); dl.replaceChildren();
+    state.meals.forEach(function (m) { m.items.forEach(function (i) {
+      var k = i.name.toLowerCase(); if (!seen[k]) { seen[k] = 1; dl.append(h('option', { value: i.name })); }
+    }); });
+  }
+
+  /* Exportação */
+  function csvCell(v) { var s = v == null ? '' : String(v); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+  function toCsv(cols, rows) { return [cols.join(',')].concat(rows.map(function (r) { return cols.map(function (c) { return csvCell(r[c]); }).join(','); })).join('\n') + '\n'; }
+  function norm(s) { return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim(); }
+  function byTs(a, b) { return a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0; }
+  function mealsCsv() {
+    var rows = [];
+    state.meals.slice().sort(byTs).forEach(function (m) {
+      m.items.forEach(function (it, i) {
+        rows.push({ meal_id: m.id, datetime: m.ts + ':00', date: m.ts.slice(0, 10), time: m.ts.slice(11, 16), meal_type: m.type, item_seq: i + 1, item: it.name, item_norm: norm(it.name), quantity: it.qty || '', category: it.cat || '', preparation: it.prep || '', portion: it.portion || '', hunger_before: m.hunger || '', eating_speed: m.speed || '', lay_down_within_2h: m.lay ? 1 : 0, meal_notes: m.notes || '' });
+      });
+    });
+    return toCsv(['meal_id','datetime','date','time','meal_type','item_seq','item','item_norm','quantity','category','preparation','portion','hunger_before','eating_speed','lay_down_within_2h','meal_notes'], rows);
+  }
+  function symCsv() {
+    var rows = [];
+    state.symptoms.slice().sort(byTs).forEach(function (s) {
+      s.kinds.forEach(function (k) {
+        rows.push({ symptom_id: s.id, datetime: s.ts + ':00', date: s.ts.slice(0, 10), time: s.ts.slice(11, 16), symptom: k, intensity: s.intensity, notes: s.notes || '' });
+      });
+    });
+    return toCsv(['symptom_id','datetime','date','time','symptom','intensity','notes'], rows);
+  }
+  function daysCsv() {
+    var rows = state.days.slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; }).map(function (d) {
+      return { date: d.date, no_symptoms: d.none ? 1 : 0, sleep_hours: d.sleep == null ? '' : d.sleep, stress: d.stress || '', alcohol: d.alcohol ? 1 : 0, smoked: d.smoke ? 1 : 0, stomach_meds: d.meds || '', cycle_phase: d.cycle || '', notes: d.notes || '' };
+    });
+    return toCsv(['date','no_symptoms','sleep_hours','stress','alcohol','smoked','stomach_meds','cycle_phase','notes'], rows);
+  }
+  async function getDownloads() { try { return (window.claude && window.claude.use) ? await window.claude.use('downloads') : null; } catch (e) { return null; } }
+  function markExport() { state.meta.lastExport = nowLocal(); persist(); renderStats(); renderNudge(); }
+  async function saveFile(filename, text) {
+    var dl = await getDownloads();
+    if (dl) {
+      try { await dl.save({ filename: filename, data: text }); markExport(); toast('Arquivo salvo.'); $('#fallback').hidden = true; return; }
+      catch (e) { if (e && e.code === 'declined') return; }
+    }
+    if (!window.claude) {
+      try {
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+        a.download = filename; document.body.append(a); a.click(); a.remove();
+        markExport(); toast('Arquivo salvo.'); $('#fallback').hidden = true; return;
+      } catch (e) {}
+    }
+    $('#fbName').textContent = filename; $('#fbText').value = text; $('#fallback').hidden = false;
+    $('#fbText').scrollIntoView({ block: 'center' });
+  }
+  $('#expMeals').addEventListener('click', function () { saveFile('refeicoes.csv', mealsCsv()); });
+  $('#expSym').addEventListener('click', function () { saveFile('sintomas.csv', symCsv()); });
+  $('#expDays').addEventListener('click', function () { saveFile('dias.csv', daysCsv()); });
+  $('#expJson').addEventListener('click', function () {
+    saveFile('prato-e-sintoma-backup.json', JSON.stringify({ app: 'prato-e-sintoma', version: 1, exported_at: nowLocal(), meals: state.meals, symptoms: state.symptoms, days: state.days }, null, 1));
+  });
+  $('#fbCopy').addEventListener('click', function () {
+    var t = $('#fbText');
+    (navigator.clipboard ? navigator.clipboard.writeText(t.value) : Promise.reject()).then(function () { toast('Texto copiado.'); markExport(); }, function () { t.focus(); t.select(); toast('Selecionado. Use Copiar do teclado.'); });
+  });
+  $('#imp').addEventListener('change', async function (e) {
+    var f = e.target.files[0], msg = $('#impMsg'); if (!f) return;
+    try {
+      var p = JSON.parse(await f.text());
+      var okTs = /^\d{4}-\d\d-\d\dT\d\d:\d\d/;
+      var have = {}; state.meals.concat(state.symptoms).forEach(function (x) { have[x.id] = 1; });
+      var nm = 0, ns = 0;
+      (p.meals || []).forEach(function (m) {
+        if (m && typeof m.id === 'string' && !have[m.id] && okTs.test(m.ts || '') && Array.isArray(m.items)) { state.meals.push(m); have[m.id] = 1; nm++; }
+      });
+      (p.symptoms || []).forEach(function (s) {
+        if (s && typeof s.id === 'string' && !have[s.id] && okTs.test(s.ts || '') && Array.isArray(s.kinds)) { state.symptoms.push(s); have[s.id] = 1; ns++; }
+      });
+      var nd = 0, haveD = {}; state.days.forEach(function (d) { haveD[d.date] = 1; });
+      (p.days || []).forEach(function (d) { if (d && /^\d{4}-\d\d-\d\d$/.test(d.date || '') && !haveD[d.date]) { state.days.push(d); haveD[d.date] = 1; nd++; } });
+      persist(); renderAll(); renderStats();
+      msg.textContent = 'Importados: ' + nm + ' refeições, ' + ns + ' sintomas e ' + nd + ' dias.';
+    } catch (err) { msg.textContent = 'Não foi possível ler este arquivo. Use um backup .json gerado aqui.'; }
+    e.target.value = '';
+  });
+  function renderStats() {
+    var items = state.meals.reduce(function (n, m) { return n + m.items.length; }, 0);
+    var all = state.meals.concat(state.symptoms).map(function (x) { return x.ts; }).sort();
+    function stat(label, val) { return h('div', null, h('dt', null, label), h('dd', null, String(val))); }
+    $('#stats').replaceChildren(stat('Refeições', state.meals.length), stat('Itens', items), stat('Sintomas', state.symptoms.length), stat('Dias fechados', state.days.length));
+    var le = state.meta.lastExport;
+    $('#lastExp').textContent = (all.length ? 'Primeiro registro em ' + all[0].slice(8, 10) + '/' + all[0].slice(5, 7) + '. ' : '') +
+      (le ? 'Último backup em ' + le.slice(8, 10) + '/' + le.slice(5, 7) + ' às ' + le.slice(11, 16) + '.' : 'Nenhum backup feito ainda.');
+  }
+
+  function renderAll() { renderToday(); renderNudge(); renderFoodList(); renderStats(); if (!$('#tab-hist').hidden) renderHist(); }
+
+  var d0 = new Date();
+  $('#todayDate').textContent = WD[d0.getDay()] + ', ' + pad(d0.getDate()) + '/' + pad(d0.getMonth() + 1);
+  resetMeal(); resetSym(); loadDay(todayStr()); renderAll();
+})();
+</script>
+
+</body>
+</html>
