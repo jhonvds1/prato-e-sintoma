@@ -132,6 +132,7 @@ output { font-family: var(--font-mono); color: var(--ink); }
 .check { grid-template-columns: auto 1fr; align-items: center; gap: 10px; align-self: end; min-height: 46px; }
 .check > span { text-transform: none; letter-spacing: 0; font-size: 15px; font-weight: 500; color: var(--ink); }
 .check input { width: 22px; height: 22px; accent-color: var(--accent); margin: 0; }
+.hint{font-size:13px!important;color:var(--muted);margin:0}.meal-suggestions{display:grid;gap:8px}.meal-choice{display:flex;align-items:flex-start;gap:10px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-size:14px}.meal-choice input{width:20px;height:20px;accent-color:var(--accent);margin:1px 0 0}.meal-choice small{display:block;color:var(--muted);margin-top:2px}.meal-linked{font-size:13px;color:var(--muted);margin-top:6px}
 
 .items-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .items-head h3 { font-size: 17px; font-weight: 650; }
@@ -291,6 +292,7 @@ body:not(.authenticated) main{display:none}
       <fieldset class="fld"><legend>O que você sentiu</legend><div class="chips" id="chips"></div></fieldset>
       <label class="fld"><span>Intensidade: <output id="sOut">5</output> de 10</span><input type="range" id="sInt" min="1" max="10" value="5"></label>
       <label class="fld"><span>Observações</span><textarea id="sNotes" rows="2" placeholder="Ex.: durou cerca de 40 minutos"></textarea></label>
+      <div class="fld" id="mealLinkField"><span>Refeições anteriores que podem estar relacionadas</span><p class="hint">Sugestões das últimas 24 horas antes do sintoma. Marque as refeições que você acredita que podem ter relação. Isso não confirma a causa.</p><div id="mealSuggestions" class="meal-suggestions"></div></div>
       <p class="err" id="sErr" role="alert" hidden></p>
       <div class="actions">
         <button type="submit" class="btn alert" id="sSave">Salvar sintoma</button>
@@ -361,7 +363,7 @@ body:not(.authenticated) main{display:none}
   var SUPABASE_URL = 'https://chpyppisbjlzoytoneua.supabase.co';
   var SUPABASE_KEY = 'sb_publishable_gdfu3r-9nf2Bnlhi1rbZMw_dxDJcvRQ';
   var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  var currentUser = null, remoteIds = { meals: [], symptoms: [], days: [] }, saveQueue = Promise.resolve(), isLoadingRemote = false;
+  var currentUser = null, remoteIds = { meals: [], symptoms: [], days: [], links: [] }, saveQueue = Promise.resolve(), isLoadingRemote = false;
   var MEAL_TYPES = [['cafe','Café da manhã'],['lanche_manha','Lanche da manhã'],['almoco','Almoço'],['lanche_tarde','Lanche da tarde'],['jantar','Jantar'],['ceia','Ceia'],['outro','Outro']];
   var CATS = [['comida','Comida'],['bebida','Bebida'],['tempero','Molho / tempero'],['doce','Doce / sobremesa'],['remedio','Remédio / suplemento']];
   var PREPS = [['','Não se aplica'],['cru','Cru'],['cozido','Cozido'],['frito','Frito'],['grelhado_assado','Grelhado / assado'],['industrializado','Industrializado']];
@@ -430,7 +432,7 @@ body:not(.authenticated) main{display:none}
     var raw = localStorage.getItem(KEY);
     if (raw) {
       var p = JSON.parse(raw);
-      if (p && Array.isArray(p.meals) && Array.isArray(p.symptoms)) state = { meals: p.meals, symptoms: p.symptoms, days: Array.isArray(p.days) ? p.days : [], meta: p.meta || {} };
+      if (p && Array.isArray(p.meals) && Array.isArray(p.symptoms)) state = { meals: p.meals, symptoms: p.symptoms.map(function(x){ x.mealIds = Array.isArray(x.mealIds) ? x.mealIds : []; return x; }), days: Array.isArray(p.days) ? p.days : [], meta: p.meta || {} };
     }
   } catch (e) {}
   try { localStorage.setItem(KEY + ':t', '1'); localStorage.removeItem(KEY + ':t'); } catch (e) { storageOk = false; }
@@ -454,9 +456,14 @@ body:not(.authenticated) main{display:none}
   function fromDayRow(d) { return { date:d.date, none:!!d.no_symptoms, sleep:d.sleep_hours == null ? null : Number(d.sleep_hours), stress:d.stress || '', alcohol:!!d.alcohol, smoke:!!d.smoked, meds:d.stomach_meds || '', cycle:d.cycle_phase || '', notes:d.notes || '' }; }
   async function syncToSupabase(data) {
     var meals = data.meals.map(toMealRow), symptoms = data.symptoms.map(toSymRow), days = data.days.map(toDayRow);
+    var links = []; data.symptoms.forEach(function(x){ (x.mealIds || []).forEach(function(mid){ if (data.meals.some(function(m){return m.id===mid;})) links.push({user_id:currentUser.id,symptom_id:x.id,meal_id:mid}); }); });
     if (meals.length) checkError(await sb.from('meals').upsert(meals, { onConflict:'id' }));
     if (symptoms.length) checkError(await sb.from('symptoms').upsert(symptoms, { onConflict:'id' }));
     if (days.length) checkError(await sb.from('days').upsert(days, { onConflict:'user_id,date' }));
+    var linkKeys = links.map(function(x){return x.symptom_id+'|'+x.meal_id;});
+    var goneLinks = remoteIds.links.filter(function(k){return linkKeys.indexOf(k)<0;});
+    if (goneLinks.length) { for (var li=0; li<goneLinks.length; li++) { var pair=goneLinks[li].split('|'); checkError(await sb.from('symptom_meals').delete().eq('user_id',currentUser.id).eq('symptom_id',pair[0]).eq('meal_id',pair[1])); } }
+    if (links.length) checkError(await sb.from('symptom_meals').upsert(links, { onConflict:'symptom_id,meal_id' }));
     var mealIds = data.meals.map(function(x){return x.id;}), symIds = data.symptoms.map(function(x){return x.id;}), dayDates = data.days.map(function(x){return x.date;});
     var goneM = remoteIds.meals.filter(function(id){return mealIds.indexOf(id)<0;});
     var goneS = remoteIds.symptoms.filter(function(id){return symIds.indexOf(id)<0;});
@@ -464,7 +471,7 @@ body:not(.authenticated) main{display:none}
     if (goneM.length) checkError(await sb.from('meals').delete().eq('user_id',currentUser.id).in('id',goneM));
     if (goneS.length) checkError(await sb.from('symptoms').delete().eq('user_id',currentUser.id).in('id',goneS));
     if (goneD.length) checkError(await sb.from('days').delete().eq('user_id',currentUser.id).in('date',goneD));
-    remoteIds = { meals:mealIds, symptoms:symIds, days:dayDates };
+    remoteIds = { meals:mealIds, symptoms:symIds, days:dayDates, links:linkKeys };
     setStatus('Sincronizado com Supabase.');
   }
   async function loadCloudData() {
@@ -473,13 +480,16 @@ body:not(.authenticated) main{display:none}
       var results = await Promise.all([
         sb.from('meals').select('*').order('ts'),
         sb.from('symptoms').select('*').order('ts'),
-        sb.from('days').select('*').order('date')
+        sb.from('days').select('*').order('date'),
+        sb.from('symptom_meals').select('symptom_id,meal_id')
       ]);
       results.forEach(checkError);
-      var m=results[0].data||[], sy=results[1].data||[], d=results[2].data||[];
-      remoteIds = { meals:m.map(function(x){return x.id;}), symptoms:sy.map(function(x){return x.id;}), days:d.map(function(x){return x.date;}) };
+      var m=results[0].data||[], sy=results[1].data||[], d=results[2].data||[], rel=results[3].data||[];
+      var mealLinks = {}; rel.forEach(function(x){ (mealLinks[x.symptom_id] = mealLinks[x.symptom_id] || []).push(x.meal_id); });
+      sy.forEach(function(x){ x.mealIds = mealLinks[x.id] || []; });
+      remoteIds = { meals:m.map(function(x){return x.id;}), symptoms:sy.map(function(x){return x.id;}), days:d.map(function(x){return x.date;}), links:rel.map(function(x){return x.symptom_id+'|'+x.meal_id;}) };
       if (m.length || sy.length || d.length) {
-        state = { meals:m.map(fromMealRow), symptoms:sy.map(fromSymRow), days:d.map(fromDayRow), meta:state.meta||{} };
+        state = { meals:m.map(fromMealRow), symptoms:sy.map(fromSymRow), days: d.map(fromDayRow), meta:state.meta||{} }; sy.forEach(function(x,i){ state.symptoms[i].mealIds = x.mealIds || []; });
         localStorage.setItem(KEY, JSON.stringify(state));
       } else if (state.meals.length || state.symptoms.length || state.days.length) {
         setStatus('Migrando registros deste aparelho para a nuvem…');
@@ -619,8 +629,22 @@ body:not(.authenticated) main{display:none}
     $('#chips').append(h('label', { class: 'chip' }, h('input', { type: 'checkbox', value: s[0] }), h('span', null, s[1])));
   });
   $('#sInt').addEventListener('input', function () { $('#sOut').textContent = $('#sInt').value; });
+  function renderMealSuggestions(selected) {
+    var box=$('#mealSuggestions'), ts=$('#sTs').value; box.replaceChildren();
+    if (!ts) { box.append(h('p',{class:'hint'},'Informe quando o sintoma começou para ver refeições anteriores.')); return; }
+    var end=new Date(ts).getTime(), start=end-24*60*60*1000;
+    var candidates=state.meals.filter(function(m){var t=new Date(m.ts).getTime();return t<=end && t>=start;}).sort(function(a,b){return a.ts<b.ts?1:-1;});
+    if (!candidates.length) { box.append(h('p',{class:'hint'},'Nenhuma refeição registrada nas 24 horas anteriores.')); return; }
+    candidates.forEach(function(m,idx){
+      var checked=(selected||[]).indexOf(m.id)>=0;
+      var foods=m.items.map(function(i){return i.name;}).join(', ');
+      var label=h('label',{class:'meal-choice'},h('input',{type:'checkbox',value:m.id,checked:checked}),h('span',null,h('strong',null,lab(MEAL_TYPES,m.type)+' · '+m.ts.slice(11,16)),h('small',null,foods),idx===0?h('small',null,'Refeição mais recente'):null));
+      box.append(label);
+    });
+  }
+  $('#sTs').addEventListener('change',function(){var selected=Array.prototype.map.call(document.querySelectorAll('#mealSuggestions input:checked'),function(x){return x.value;});renderMealSuggestions(selected);});
   function resetSym() {
-    $('#sTs').value = nowLocal(); $('#sInt').value = 5; $('#sOut').textContent = '5'; $('#sNotes').value = '';
+    $('#sTs').value = nowLocal(); $('#sInt').value = 5; $('#sOut').textContent = '5'; $('#sNotes').value = ''; renderMealSuggestions([]);
     document.querySelectorAll('#chips input').forEach(function (c) { c.checked = false; });
     showErr('#sErr', ''); $('#sSave').textContent = 'Salvar sintoma'; $('#sCancel').hidden = true;
   }
@@ -631,7 +655,8 @@ body:not(.authenticated) main{display:none}
     if (!ts) { showErr('#sErr', 'Informe quando o sintoma começou.'); return; }
     if (!kinds.length) { showErr('#sErr', 'Marque pelo menos um sintoma.'); return; }
     var isEdit = editing && editing.k === 'sym';
-    var rec = { id: isEdit ? editing.id : uid(), ts: ts, kinds: kinds, intensity: +$('#sInt').value, notes: $('#sNotes').value.trim() };
+    var mealIds = Array.prototype.map.call(document.querySelectorAll('#mealSuggestions input:checked'),function(c){return c.value;});
+    var rec = { id: isEdit ? editing.id : uid(), ts: ts, kinds: kinds, intensity: +$('#sInt').value, notes: $('#sNotes').value.trim(), mealIds: mealIds };
     if (isEdit) state.symptoms = state.symptoms.map(function (s) { return s.id === rec.id ? rec : s; }); else state.symptoms.push(rec);
     var dr = getDay(ts.slice(0, 10)), cleared = !!(dr && dr.none);
     if (cleared) dr.none = false;
@@ -700,7 +725,7 @@ body:not(.authenticated) main{display:none}
   function editSym(id) {
     var s = state.symptoms.filter(function (x) { return x.id === id; })[0]; if (!s) return;
     editing = { k: 'sym', id: id };
-    $('#sTs').value = s.ts; $('#sInt').value = s.intensity; $('#sOut').textContent = String(s.intensity); $('#sNotes').value = s.notes || '';
+    $('#sTs').value = s.ts; $('#sInt').value = s.intensity; $('#sOut').textContent = String(s.intensity); $('#sNotes').value = s.notes || ''; renderMealSuggestions(s.mealIds || []);
     document.querySelectorAll('#chips input').forEach(function (c) { c.checked = s.kinds.indexOf(c.value) >= 0; });
     showErr('#sErr', ''); $('#sSave').textContent = 'Atualizar sintoma'; $('#sCancel').hidden = false;
     setKind('sym'); go('reg');
@@ -739,7 +764,7 @@ body:not(.authenticated) main{display:none}
         m.notes ? h('div', { class: 'note' }, m.notes) : null,
         h('div', { class: 'ev-actions' },
           h('button', { type: 'button', class: 'link', onclick: function () { editMeal(m.id); } }, 'Editar'),
-          delBtn(function () { state.meals = state.meals.filter(function (x) { return x.id !== m.id; }); persist(); renderAll(); toast('Refeição excluída.'); }))));
+          delBtn(function () { state.meals = state.meals.filter(function (x) { return x.id !== m.id; }); state.symptoms.forEach(function(s){s.mealIds=(s.mealIds||[]).filter(function(id){return id!==m.id;});}); persist(); renderAll(); toast('Refeição excluída.'); }))));
   }
   function symNode(s) {
     var scale = h('span', { class: 'scale', 'aria-label': 'Intensidade ' + s.intensity + ' de 10' });
@@ -751,6 +776,7 @@ body:not(.authenticated) main{display:none}
         h('div', { class: 'ev-title' }, h('strong', null, s.kinds.map(function (k) { return lab(SYMPTOMS, k); }).join(', '))),
         h('div', { class: 'meta' }, scale, h('span', null, s.intensity + '/10')),
         s.notes ? h('div', { class: 'note' }, s.notes) : null,
+        (s.mealIds && s.mealIds.length) ? h('div',{class:'meal-linked'},'Refeições relacionadas: '+s.mealIds.map(function(id){var m=state.meals.filter(function(x){return x.id===id;})[0];return m ? lab(MEAL_TYPES,m.type)+' ('+m.ts.slice(11,16)+')' : '';}).filter(Boolean).join(' · ')) : null,
         h('div', { class: 'ev-actions' },
           h('button', { type: 'button', class: 'link', onclick: function () { editSym(s.id); } }, 'Editar'),
           delBtn(function () { state.symptoms = state.symptoms.filter(function (x) { return x.id !== s.id; }); persist(); renderAll(); toast('Sintoma excluído.'); }))));
@@ -828,10 +854,10 @@ body:not(.authenticated) main{display:none}
     var rows = [];
     state.symptoms.slice().sort(byTs).forEach(function (s) {
       s.kinds.forEach(function (k) {
-        rows.push({ symptom_id: s.id, datetime: s.ts + ':00', date: s.ts.slice(0, 10), time: s.ts.slice(11, 16), symptom: k, intensity: s.intensity, notes: s.notes || '' });
+        rows.push({ symptom_id: s.id, datetime: s.ts + ':00', date: s.ts.slice(0, 10), time: s.ts.slice(11, 16), symptom: k, intensity: s.intensity, meal_ids: (s.mealIds||[]).join('|'), notes: s.notes || '' });
       });
     });
-    return toCsv(['symptom_id','datetime','date','time','symptom','intensity','notes'], rows);
+    return toCsv(['symptom_id','datetime','date','time','symptom','intensity','meal_ids','notes'], rows);
   }
   function daysCsv() {
     var rows = state.days.slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; }).map(function (d) {
@@ -879,7 +905,7 @@ body:not(.authenticated) main{display:none}
         if (m && typeof m.id === 'string' && !have[m.id] && okTs.test(m.ts || '') && Array.isArray(m.items)) { state.meals.push(m); have[m.id] = 1; nm++; }
       });
       (p.symptoms || []).forEach(function (s) {
-        if (s && typeof s.id === 'string' && !have[s.id] && okTs.test(s.ts || '') && Array.isArray(s.kinds)) { state.symptoms.push(s); have[s.id] = 1; ns++; }
+        if (s && typeof s.id === 'string' && !have[s.id] && okTs.test(s.ts || '') && Array.isArray(s.kinds)) { s.mealIds=Array.isArray(s.mealIds)?s.mealIds:[]; state.symptoms.push(s); have[s.id] = 1; ns++; }
       });
       var nd = 0, haveD = {}; state.days.forEach(function (d) { haveD[d.date] = 1; });
       (p.days || []).forEach(function (d) { if (d && /^\d{4}-\d\d-\d\d$/.test(d.date || '') && !haveD[d.date]) { state.days.push(d); haveD[d.date] = 1; nd++; } });
