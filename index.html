@@ -299,6 +299,14 @@ output { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--berr
 .name-row { grid-column: 1 / -1; display: flex; gap: 8px; }
 .name-row input { flex: 1; }
 @media (min-width: 720px) { .item { grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr)); } }
+.addons { display: grid; gap: 12px; }
+.addon { display: grid; gap: 12px; }
+.addon-body { display: grid; gap: 12px; }
+.addon-body > div { display: grid; gap: 12px; }
+.addon-body > div:empty { display: none; }
+.addon .check { align-self: stretch; }
+.item-doce, .item-bebida { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+@media (min-width: 720px) { .item.item-doce, .item.item-bebida { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .item select { padding-left: 12px; padding-right: 30px; background-position: right 10px center; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -444,7 +452,6 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
         <div class="quick">
           <button type="button" class="btn primary" id="qMeal"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v6.5a2.5 2.5 0 0 0 5 0V3M8.5 3v18"/><path d="M17 21V3c-2.2 1.2-3.5 3.6-3.5 6.5 0 1.9.9 3 3.5 3"/></svg><span class="q-pre">Registrar </span><span class="q-cap">refeição</span></button>
           <button type="button" class="btn berry-soft" id="qSym"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h3.5l2.5-6 4 12 2.5-6H21"/></svg><span class="q-pre">Registrar </span><span class="q-cap">sintoma</span></button>
-          <button type="button" class="btn" id="qDay"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>Fechar o dia</button>
         </div>
       </header>
 
@@ -475,7 +482,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
     <section class="tab" id="tab-reg" role="tabpanel" aria-labelledby="t-reg" hidden>
       <header class="page-head">
         <h1>Registrar</h1>
-        <p>Refeições, sintomas e o fechamento do dia.</p>
+        <p>Refeições, sintomas e o contexto do dia.</p>
       </header>
       <div class="today" id="todaySum"></div>
       <div class="nudge" id="nudge" hidden></div>
@@ -483,7 +490,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
       <div class="seg" role="group" aria-label="O que registrar">
         <button type="button" data-kind="meal" aria-pressed="true"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v6.5a2.5 2.5 0 0 0 5 0V3M8.5 3v18"/><path d="M17 21V3c-2.2 1.2-3.5 3.6-3.5 6.5 0 1.9.9 3 3.5 3"/></svg>Refeição</button>
         <button type="button" data-kind="sym" aria-pressed="false"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h3.5l2.5-6 4 12 2.5-6H21"/></svg>Sintoma</button>
-        <button type="button" data-kind="day" aria-pressed="false"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>Dia</button>
+        <button type="button" data-kind="day" aria-pressed="false"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>Contexto</button>
       </div>
 
       <form id="mealForm" class="card form" novalidate>
@@ -493,12 +500,28 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
         </div>
         <label class="fld"><span>Estava com fome?</span><select id="mHunger"></select></label>
         <div class="items-head">
-          <h3>O que você comeu e bebeu</h3>
+          <h3>O que você comeu</h3>
           <button type="button" class="link" id="repeatBtn">Repetir a última</button>
         </div>
         <div id="items"></div>
-        <datalist id="foodList"></datalist>
+        <datalist id="foodList"></datalist><datalist id="dessertList"></datalist><datalist id="drinkList"></datalist>
         <button type="button" class="btn wide" id="addItem">+ Adicionar item</button>
+        <div class="addons">
+          <div class="addon">
+            <label class="fld check"><input type="checkbox" id="mDessert"><span>Comi sobremesa</span></label>
+            <div class="addon-body" id="dessertBox" hidden>
+              <div id="dessertItems"></div>
+              <button type="button" class="btn wide" id="addDessert">+ Outra sobremesa</button>
+            </div>
+          </div>
+          <div class="addon">
+            <label class="fld check"><input type="checkbox" id="mDrink"><span>Bebi algo</span></label>
+            <div class="addon-body" id="drinkBox" hidden>
+              <div id="drinkItems"></div>
+              <button type="button" class="btn wide" id="addDrink">+ Outra bebida</button>
+            </div>
+          </div>
+        </div>
         <div class="row2">
           <label class="fld"><span>Velocidade ao comer</span><select id="mSpeed"></select></label>
           <label class="fld check"><input type="checkbox" id="mLay"><span>Deitei em até 2 h depois</span></label>
@@ -525,9 +548,8 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
       </form>
 
       <form id="dayForm" class="card form" novalidate hidden>
-        <p>Feche o dia à noite. Dias sem sintomas também contam para a análise.</p>
+        <p>Opcional. O dia termina à meia-noite. Se você não registrar sintomas, ele conta como um dia sem sintomas. Use este formulário só para somar contexto: sono, estresse, álcool e outros.</p>
         <label class="fld"><span>Dia</span><input type="date" id="dDate"></label>
-        <label class="fld check"><input type="checkbox" id="dNone"><span>Não senti nenhum sintoma neste dia</span></label>
         <div class="row2">
           <label class="fld"><span>Horas de sono (noite anterior)</span><input type="number" id="dSleep" min="0" max="24" step="0.5" inputmode="decimal" placeholder="Ex.: 7"></label>
           <label class="fld"><span>Estresse no dia</span><select id="dStress"></select></label>
@@ -540,7 +562,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
         <label class="fld"><span>Fase do ciclo</span><select id="dCycle"></select></label>
         <label class="fld"><span>Observações</span><textarea id="dNotes" rows="2" placeholder="Ex.: dia corrido, jantei tarde"></textarea></label>
         <p class="err" id="dErr" role="alert" hidden></p>
-        <div class="actions"><button type="submit" class="btn primary" id="dSave">Salvar dia</button></div>
+        <div class="actions"><button type="submit" class="btn primary" id="dSave">Salvar contexto</button></div>
       </form>
     </section>
 
@@ -564,7 +586,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
       </div>
       <div class="card">
         <h2>Exportar para o BI</h2>
-        <p><code>refeicoes.csv</code> tem uma linha por item comido (<code>meal_id</code> liga os itens da mesma refeição). <code>sintomas.csv</code> tem uma linha por sintoma, com as refeições relacionadas em <code>meal_ids</code>. <code>dias.csv</code> tem uma linha por dia, com sono, estresse e se foi um dia sem sintomas. Cruze pelos horários e pela data.</p>
+        <p><code>refeicoes.csv</code> tem uma linha por item comido (<code>meal_id</code> liga os itens da mesma refeição). <code>sintomas.csv</code> tem uma linha por sintoma, com as refeições relacionadas em <code>meal_ids</code>. <code>dias.csv</code> tem uma linha por dia desde o primeiro registro: dia sem sintomas (sem sintoma registrado até a meia-noite), quantidade de refeições e, quando preenchido, sono, estresse e outros. Cruze pelos horários e pela data.</p>
         <div class="stack">
           <button type="button" class="btn primary" id="expMeals">Baixar refeicoes.csv</button>
           <button type="button" class="btn primary" id="expSym">Baixar sintomas.csv</button>
@@ -806,27 +828,43 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
   fillSelect($('#dStress'), STRESS);
   fillSelect($('#dCycle'), CYCLE);
 
+  /* Itens da refeição em três grupos: comida (lista principal), sobremesa e bebida. Tudo vive em mealDraft, diferenciado por cat. */
+  var MAIN_CATS = CATS.filter(function (c) { return c[0] !== 'doce' && c[0] !== 'bebida'; });
+  function isMainItem(i) { return i.cat !== 'doce' && i.cat !== 'bebida'; }
+  function itemRow(it, kind) {
+    var ph = kind === 'doce' ? 'Ex.: pudim, sorvete, brigadeiro' : kind === 'bebida' ? 'Ex.: suco de laranja, café, refrigerante' : 'Ex.: arroz branco';
+    var qph = kind === 'bebida' ? 'Ex.: 1 copo, 200 ml' : kind === 'doce' ? 'Ex.: 1 fatia, 2 bolas' : 'Ex.: 1 prato, 2 fatias, 200 ml';
+    var label = kind === 'doce' ? 'Sobremesa' : kind === 'bebida' ? 'Bebida' : 'Item';
+    var name = h('input', { type: 'text', placeholder: ph, list: kind === 'doce' ? 'dessertList' : kind === 'bebida' ? 'drinkList' : 'foodList', autocomplete: 'off', 'aria-label': label });
+    name.value = it.name;
+    name.addEventListener('input', function () { it.name = name.value; });
+    var rm = h('button', { type: 'button', class: 'icon', 'aria-label': 'Remover ' + label.toLowerCase() }, '×');
+    rm.addEventListener('click', function () {
+      var pos = mealDraft.indexOf(it); if (pos < 0) return;
+      if (kind === 'comida' && mealDraft.filter(isMainItem).length === 1) mealDraft[pos] = newItem(); else mealDraft.splice(pos, 1);
+      renderItems();
+    });
+    var qty = h('input', { type: 'text', placeholder: qph, autocomplete: 'off' });
+    qty.value = it.qty;
+    qty.addEventListener('input', function () { it.qty = qty.value; });
+    var fields = [h('label', { class: 'fld' }, h('span', null, 'Quantidade'), qty)];
+    if (kind === 'comida') {
+      fields.push(h('label', { class: 'fld' }, h('span', null, 'Tipo'), makeSel(MAIN_CATS, it.cat, function (v) { it.cat = v; })));
+      fields.push(h('label', { class: 'fld' }, h('span', null, 'Preparo'), makeSel(PREPS, it.prep, function (v) { it.prep = v; })));
+    }
+    if (kind !== 'bebida') fields.push(h('label', { class: 'fld' }, h('span', null, 'Porção'), makeSel(PORTIONS, it.portion || '', function (v) { it.portion = v; })));
+    return h('div', { class: 'item item-' + kind }, h('div', { class: 'name-row' }, name, rm), fields);
+  }
   function renderItems() {
+    if (!mealDraft.some(isMainItem)) mealDraft.unshift(newItem());
     var box = $('#items'); box.replaceChildren();
-    mealDraft.forEach(function (it, idx) {
-      var name = h('input', { type: 'text', placeholder: 'Ex.: arroz branco', list: 'foodList', autocomplete: 'off', 'aria-label': 'Item ' + (idx + 1) });
-      name.value = it.name;
-      name.addEventListener('input', function () { it.name = name.value; });
-      var rm = h('button', { type: 'button', class: 'icon', 'aria-label': 'Remover item ' + (idx + 1) }, '×');
-      rm.addEventListener('click', function () {
-        if (mealDraft.length > 1) mealDraft.splice(idx, 1); else mealDraft[0] = newItem();
-        renderItems();
-      });
-      var qty = h('input', { type: 'text', placeholder: 'Ex.: 1 prato, 2 fatias, 200 ml', autocomplete: 'off' });
-      qty.value = it.qty;
-      qty.addEventListener('input', function () { it.qty = qty.value; });
-      box.append(h('div', { class: 'item' },
-        h('div', { class: 'name-row' }, name, rm),
-        h('label', { class: 'fld' }, h('span', null, 'Quantidade'), qty),
-        h('label', { class: 'fld' }, h('span', null, 'Tipo'), makeSel(CATS, it.cat, function (v) { it.cat = v; })),
-        h('label', { class: 'fld' }, h('span', null, 'Preparo'), makeSel(PREPS, it.prep, function (v) { it.prep = v; })),
-        h('label', { class: 'fld' }, h('span', null, 'Porção'), makeSel(PORTIONS, it.portion || '', function (v) { it.portion = v; }))
-      ));
+    mealDraft.filter(isMainItem).forEach(function (it) { box.append(itemRow(it, 'comida')); });
+    [['doce', '#dessertItems', '#mDessert', '#dessertBox'], ['bebida', '#drinkItems', '#mDrink', '#drinkBox']].forEach(function (g) {
+      var list = mealDraft.filter(function (i) { return i.cat === g[0]; }), el = $(g[1]);
+      el.replaceChildren();
+      list.forEach(function (it) { el.append(itemRow(it, g[0])); });
+      $(g[2]).checked = list.length > 0;
+      $(g[3]).hidden = list.length === 0;
     });
   }
   function resetMeal() {
@@ -930,31 +968,30 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
   function loadDay(date) {
     var d = getDay(date) || {};
     $('#dDate').value = date;
-    $('#dNone').checked = !!d.none; $('#dSleep').value = d.sleep == null ? '' : d.sleep;
+    $('#dSleep').value = d.sleep == null ? '' : d.sleep;
     $('#dStress').value = d.stress || ''; $('#dAlcohol').checked = !!d.alcohol; $('#dSmoke').checked = !!d.smoke;
     $('#dMeds').value = d.meds || ''; $('#dCycle').value = d.cycle || ''; $('#dNotes').value = d.notes || '';
-    showErr('#dErr', ''); $('#dSave').textContent = getDay(date) ? 'Atualizar dia' : 'Salvar dia';
+    showErr('#dErr', ''); $('#dSave').textContent = getDay(date) ? 'Atualizar contexto' : 'Salvar contexto';
   }
   $('#dDate').addEventListener('change', function () { if ($('#dDate').value) loadDay($('#dDate').value); });
   $('#dayForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var date = $('#dDate').value;
     if (!date) { showErr('#dErr', 'Escolha o dia.'); return; }
-    var none = $('#dNone').checked;
-    if (none && state.symptoms.some(function (s) { return s.ts.slice(0, 10) === date; })) { showErr('#dErr', 'Já existe sintoma registrado neste dia. Desmarque "Não senti nenhum sintoma".'); return; }
     var sl = $('#dSleep').value === '' ? null : parseFloat($('#dSleep').value);
     if (sl !== null && (isNaN(sl) || sl < 0 || sl > 24)) { showErr('#dErr', 'As horas de sono devem estar entre 0 e 24.'); return; }
-    var rec = { date: date, none: none, sleep: sl, stress: $('#dStress').value, alcohol: $('#dAlcohol').checked, smoke: $('#dSmoke').checked, meds: $('#dMeds').value.trim(), cycle: $('#dCycle').value, notes: $('#dNotes').value.trim() };
+    var rec = { date: date, none: false, sleep: sl, stress: $('#dStress').value, alcohol: $('#dAlcohol').checked, smoke: $('#dSmoke').checked, meds: $('#dMeds').value.trim(), cycle: $('#dCycle').value, notes: $('#dNotes').value.trim() };
     var existed = !!getDay(date);
     state.days = state.days.filter(function (d) { return d.date !== date; }).concat([rec]);
     persist(); renderAll(); loadDay(date);
-    toast(existed ? 'Dia atualizado.' : 'Dia salvo.');
+    toast(existed ? 'Contexto atualizado.' : 'Contexto salvo.');
   });
   function openDay(date) { if (editing) cancelEdit(); setKind('day'); loadDay(date); go('reg'); }
   function dayMeta(day) {
     var d = getDay(day), bits = [], box = h('div', { class: 'daymeta' });
+    var hasSym = state.symptoms.some(function (s) { return s.ts.slice(0, 10) === day; });
+    if (!hasSym && day < todayStr()) box.append(h('span', { class: 'tag' }, 'Sem sintomas'));
     if (d) {
-      if (d.none) box.append(h('span', { class: 'tag' }, 'Sem sintomas'));
       if (d.sleep != null) bits.push('Sono ' + String(d.sleep).replace('.', ',') + ' h');
       if (d.stress) bits.push('Estresse ' + lab(STRESS, d.stress).toLowerCase());
       if (d.alcohol) bits.push('Álcool');
@@ -962,11 +999,9 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
       if (d.meds) bits.push('Remédio: ' + d.meds);
       if (d.cycle) bits.push(lab(CYCLE, d.cycle));
       if (bits.length) box.append(h('span', null, bits.join(' · ')));
-      box.append(h('button', { type: 'button', class: 'link', onclick: function () { openDay(day); } }, 'Editar dia'));
-    } else if (day <= todayStr()) {
-      box.append(h('span', null, 'Dia ainda não fechado.'), h('button', { type: 'button', class: 'link', onclick: function () { openDay(day); } }, 'Fechar o dia'));
+      box.append(h('button', { type: 'button', class: 'link', onclick: function () { openDay(day); } }, 'Editar contexto'));
     }
-    return box;
+    return box.childNodes.length ? box : null;
   }
 
   function cancelEdit() { editing = null; resetMeal(); resetSym(); }
@@ -1071,7 +1106,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
     var its = ms.reduce(function (n, m) { return n + m.items.length; }, 0);
     var ss = state.symptoms.filter(function (s) { return s.ts.slice(0, 10) === today; }).length;
     var box = $('#todaySum'); box.replaceChildren(
-      h('span', null, 'Hoje'), h('span', null, h('b', null, ms.length), ' refeições'), h('span', null, h('b', null, its), ' itens'), h('span', null, h('b', null, ss), ' sintomas'), h('span', null, getDay(today) ? 'dia fechado' : 'dia aberto'));
+      h('span', null, 'Hoje'), h('span', null, h('b', null, ms.length), ' refeições'), h('span', null, h('b', null, its), ' itens'), h('span', null, h('b', null, ss), ' sintomas'), h('span', null, 'o dia termina à meia-noite'));
   }
   function daysSince(ts) {
     var p = ts.slice(0, 10).split('-').map(Number);
@@ -1082,17 +1117,27 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
     var go2 = h('button', { type: 'button', class: 'link', onclick: function () { go('exp'); } }, 'Exportar agora');
     if (!storageOk) {
       n.replaceChildren('Este navegador não está guardando os dados. Exporte um backup com frequência.', go2); n.hidden = false;
-    } else if (nowLocal().slice(11, 13) >= '18' && !getDay(todayStr()) && state.meals.concat(state.symptoms).some(function (x) { return x.ts.slice(0, 10) === todayStr(); })) {
-      n.replaceChildren('Feche o dia: conte se teve sintomas e como foram o sono e o estresse. ', h('button', { type: 'button', class: 'link', onclick: function () { openDay(todayStr()); } }, 'Fechar o dia')); n.hidden = false;
     } else if (total >= 5 && (!state.meta.lastExport || daysSince(state.meta.lastExport) >= 7)) {
       n.replaceChildren(state.meta.lastExport ? 'Faz mais de 7 dias desde o último backup.' : 'Você ainda não fez nenhum backup.', go2); n.hidden = false;
     } else { n.hidden = true; }
   }
+  /* Sugestões prontas (comida, sobremesa, bebida) + o que ela já digitou antes */
+  var FOOD_BASE = ['Arroz branco','Arroz integral','Feijão carioca','Feijão preto','Feijoada','Lentilha','Grão-de-bico','Macarrão','Macarrão ao molho de tomate','Macarrão à bolonhesa','Macarrão instantâneo (miojo)','Espaguete','Lasanha','Nhoque','Panqueca','Pizza de mussarela','Pizza de calabresa','Pizza de frango com catupiry','Hambúrguer','X-burguer','X-salada','Cachorro-quente','Pastel de carne','Pastel de queijo','Coxinha','Empada','Esfiha','Kibe','Pão de queijo','Pão francês','Pão integral','Pão de forma','Torrada','Tapioca','Cuscuz','Omelete','Ovo cozido','Ovo frito','Ovo mexido','Bife acebolado','Bife à parmegiana','Carne moída','Carne assada','Churrasco','Costela','Linguiça','Salsicha','Bacon','Presunto','Peito de peru','Mortadela','Frango grelhado','Frango frito','Frango assado','Filé de frango empanado','Strogonoff de frango','Strogonoff de carne','Peixe grelhado','Peixe frito','Tilápia','Salmão','Sardinha','Atum','Camarão','Sushi','Sashimi','Batata frita','Batata cozida','Purê de batata','Batata doce','Mandioca cozida','Mandioca frita','Farofa','Polenta','Milho cozido','Salada de alface e tomate','Salada de alface','Salada de repolho','Salada de maionese','Tomate','Cenoura','Beterraba','Pepino','Brócolis','Couve-flor','Couve refogada','Abobrinha','Abóbora','Chuchu','Vagem','Espinafre','Berinjela','Cebola','Alho','Sopa de legumes','Caldo de feijão','Caldo verde','Canja de galinha','Queijo mussarela','Queijo minas','Queijo prato','Queijo parmesão','Requeijão','Cream cheese','Manteiga','Margarina','Iogurte natural','Iogurte de frutas','Aveia','Granola','Cereal matinal','Cuscuz com ovo','Banana','Maçã','Mamão','Laranja','Mexerica','Abacaxi','Melancia','Melão','Manga','Uva','Morango','Kiwi','Pera','Abacate','Limão','Amendoim','Castanha-do-pará','Castanha de caju','Nozes','Barra de cereal','Biscoito cream cracker','Biscoito recheado','Biscoito de polvilho','Bolacha maisena','Pipoca','Salgadinho de pacote','Batata chips','Molho de tomate','Molho branco','Maionese','Ketchup','Mostarda','Molho de pimenta','Pimenta','Azeite','Vinagre','Temperos prontos','Hambúrguer de soja','Tofu'];
+  var DESSERT_BASE = ['Pudim','Mousse de chocolate','Mousse de maracujá','Brigadeiro','Beijinho','Sorvete de creme','Sorvete de chocolate','Sorvete de morango','Picolé','Açaí','Bolo de chocolate','Bolo de cenoura com chocolate','Bolo de fubá','Bolo de laranja','Bolo de aipim','Torta de limão','Torta de morango','Torta de chocolate','Cheesecake','Brownie','Cookie','Pavê','Gelatina','Pamonha','Curau','Arroz-doce','Canjica','Doce de leite','Goiabada com queijo','Paçoca','Pé de moleque','Chocolate ao leite','Chocolate amargo','Bombom','Trufa','Chocolate branco','Sonho','Churros','Rocambole','Salada de frutas','Banana com canela','Doce de abóbora','Quindim','Cocada','Pão de mel','Maria-mole','Panetone','Alfajor','Wafer','Biscoito recheado'];
+  var DRINK_BASE = ['Água','Água com gás','Água de coco','Suco de laranja','Suco de uva','Suco de maracujá','Suco de limão','Suco de abacaxi','Suco de manga','Suco de acerola','Suco de caju','Suco de melancia','Suco verde','Suco de caixinha','Refrigerante de cola','Refrigerante de guaraná','Refrigerante zero','Refrigerante de limão','Café preto','Café com leite','Café expresso','Cappuccino','Chá de camomila','Chá de erva-doce','Chá de hortelã','Chá de boldo','Chá verde','Chá preto','Chá de gengibre','Leite integral','Leite desnatado','Leite sem lactose','Leite de soja','Leite de amêndoas','Iogurte líquido','Achocolatado','Vitamina de banana','Vitamina de frutas','Smoothie','Mate','Chimarrão','Energético','Isotônico','Cerveja','Vinho tinto','Vinho branco','Espumante','Caipirinha','Vodka','Whisky','Gin','Licor','Cachaça'];
   function renderFoodList() {
-    var seen = {}, dl = $('#foodList'); dl.replaceChildren();
+    var buckets = { foodList: [FOOD_BASE, {}], dessertList: [DESSERT_BASE, {}], drinkList: [DRINK_BASE, {}] };
+    var pick = function (cat) { return cat === 'doce' ? 'dessertList' : cat === 'bebida' ? 'drinkList' : 'foodList'; };
     state.meals.forEach(function (m) { m.items.forEach(function (i) {
-      var k = i.name.toLowerCase(); if (!seen[k]) { seen[k] = 1; dl.append(h('option', { value: i.name })); }
+      var b = buckets[pick(i.cat)], k = norm(i.name); if (k && !b[1][k]) b[1][k] = i.name;
     }); });
+    Object.keys(buckets).forEach(function (id) {
+      var b = buckets[id], seen = {}, out = [], dl = $('#' + id);
+      Object.keys(b[1]).map(function (k) { return b[1][k]; }).sort().concat(b[0]).forEach(function (n) {
+        var k = norm(n); if (!seen[k]) { seen[k] = 1; out.push(h('option', { value: n })); }
+      });
+      dl.replaceChildren.apply(dl, out);
+    });
   }
 
   /* Exportação */
@@ -1119,10 +1164,17 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
     return toCsv(['symptom_id','datetime','date','time','symptom','intensity','meal_ids','notes'], rows);
   }
   function daysCsv() {
-    var rows = state.days.slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; }).map(function (d) {
-      return { date: d.date, no_symptoms: d.none ? 1 : 0, sleep_hours: d.sleep == null ? '' : d.sleep, stress: d.stress || '', alcohol: d.alcohol ? 1 : 0, smoked: d.smoke ? 1 : 0, stomach_meds: d.meds || '', cycle_phase: d.cycle || '', notes: d.notes || '' };
-    });
-    return toCsv(['date','no_symptoms','sleep_hours','stress','alcohol','smoked','stomach_meds','cycle_phase','notes'], rows);
+    var first = firstRecordDate(), rows = [];
+    if (first) for (var d = first; d <= todayStr(); d = dateAdd(d, 1)) {
+      var syms = state.symptoms.filter(function (s) { return s.ts.slice(0, 10) === d; });
+      var rec = getDay(d) || {};
+      rows.push({ date: d, day_complete: d < todayStr() ? 1 : 0, no_symptoms: syms.length ? 0 : 1, symptom_count: syms.length,
+        max_intensity: syms.reduce(function (n, s) { return Math.max(n, s.intensity || 0); }, 0) || '',
+        meals_count: state.meals.filter(function (m) { return m.ts.slice(0, 10) === d; }).length,
+        sleep_hours: rec.sleep == null ? '' : rec.sleep, stress: rec.stress || '', alcohol: getDay(d) ? (rec.alcohol ? 1 : 0) : '', smoked: getDay(d) ? (rec.smoke ? 1 : 0) : '',
+        stomach_meds: rec.meds || '', cycle_phase: rec.cycle || '', notes: rec.notes || '' });
+    }
+    return toCsv(['date','day_complete','no_symptoms','symptom_count','max_intensity','meals_count','sleep_hours','stress','alcohol','smoked','stomach_meds','cycle_phase','notes'], rows);
   }
   async function getDownloads() { try { return (window.claude && window.claude.use) ? await window.claude.use('downloads') : null; } catch (e) { return null; } }
   function markExport() { state.meta.lastExport = nowLocal(); persist(); renderStats(); renderNudge(); }
@@ -1177,7 +1229,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
     var items = state.meals.reduce(function (n, m) { return n + m.items.length; }, 0);
     var all = state.meals.concat(state.symptoms).map(function (x) { return x.ts; }).sort();
     function stat(label, val) { return h('div', null, h('dt', null, label), h('dd', null, String(val))); }
-    $('#stats').replaceChildren(stat('Refeições', state.meals.length), stat('Itens', items), stat('Sintomas', state.symptoms.length), stat('Dias fechados', state.days.length));
+    $('#stats').replaceChildren(stat('Refeições', state.meals.length), stat('Itens', items), stat('Sintomas', state.symptoms.length), stat('Dias com contexto', state.days.length));
     var le = state.meta.lastExport;
     $('#lastExp').textContent = (all.length ? 'Primeiro registro em ' + all[0].slice(8, 10) + '/' + all[0].slice(5, 7) + '. ' : '') +
       (le ? 'Último backup em ' + le.slice(8, 10) + '/' + le.slice(5, 7) + ' às ' + le.slice(11, 16) + '.' : 'Nenhum backup feito ainda.');
@@ -1190,6 +1242,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
     meal: '<path d="M6 3v6.5a2.5 2.5 0 0 0 5 0V3M8.5 3v18"/><path d="M17 21V3c-2.2 1.2-3.5 3.6-3.5 6.5 0 1.9.9 3 3.5 3"/>',
     pulse: '<path d="M3 12h3.5l2.5-6 4 12 2.5-6H21"/>',
     moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+    leaf: '<path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14"/><path d="M5 19c2-4 5-7 9-9"/>',
     calendar: '<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/>'
   };
   function ico(name) {
@@ -1254,6 +1307,10 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
       btnLabel ? h('button', { type: 'button', class: 'btn', onclick: fn }, btnLabel) : null);
   }
 
+  function firstRecordDate() {
+    var all = state.meals.map(function (m) { return m.ts.slice(0, 10); }).concat(state.symptoms.map(function (s) { return s.ts.slice(0, 10); }), state.days.map(function (d) { return d.date; })).sort();
+    return all[0] || '';
+  }
   function renderDash() {
     if (!$('#dsStats')) return;
     var today = todayStr(), now = new Date(), hr = now.getHours();
@@ -1264,14 +1321,15 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
     var ss = state.symptoms.filter(function (s) { return s.ts.slice(0, 10) === today; });
     var items = ms.reduce(function (n, m) { return n + m.items.length; }, 0);
     var maxToday = ss.reduce(function (n, s) { return Math.max(n, s.intensity || 0); }, 0);
-    var dayRec = getDay(today);
     var week = []; for (var i = 6; i >= 0; i--) week.push(dateAdd(today, -i));
+    var first = firstRecordDate(), streak = 0;
+    if (first) for (var sd = today; sd >= first && !state.symptoms.some(function (s) { return s.ts.slice(0, 10) === sd; }); sd = dateAdd(sd, -1)) streak++;
     var symDays = week.filter(function (d) { return state.symptoms.some(function (s) { return s.ts.slice(0, 10) === d; }); }).length;
 
     $('#dsStats').replaceChildren(
       statTile('', 'meal', 'Refeições hoje', String(ms.length), ms.length ? items + (items === 1 ? ' item' : ' itens') : 'Nenhuma ainda'),
-      statTile('sym', 'pulse', 'Sintomas hoje', String(ss.length), ss.length ? 'Maior intensidade ' + maxToday + ' de 10' : (dayRec && dayRec.none ? 'Dia sem sintomas' : 'Nenhum registrado')),
-      statTile('', 'moon', 'Fechamento do dia', dayRec ? 'Fechado' : 'Aberto', dayRec ? (dayRec.sleep != null ? 'Sono de ' + String(dayRec.sleep).replace('.', ',') + ' h' : 'Sono não informado') : 'Feche à noite', true),
+      statTile('sym', 'pulse', 'Sintomas hoje', String(ss.length), ss.length ? 'Maior intensidade ' + maxToday + ' de 10' : 'Nenhum registrado até agora'),
+      statTile('', 'leaf', 'Sem sintomas', String(streak), streak === 1 ? 'dia seguido, contando hoje' : 'dias seguidos, contando hoje'),
       statTile('sym', 'calendar', 'Últimos 7 dias', String(symDays), symDays === 1 ? 'dia com sintoma' : 'dias com sintoma')
     );
 
@@ -1298,11 +1356,10 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
     var cols = days14.map(function (d) {
       var syms = state.symptoms.filter(function (s) { return s.ts.slice(0, 10) === d; });
       var mx = syms.reduce(function (n, s) { return Math.max(n, s.intensity || 0); }, 0);
-      var rec = getDay(d), hasMeals = state.meals.some(function (m) { return m.ts.slice(0, 10) === d; });
-      var kind = mx ? 'sym' : (rec && rec.none ? 'calm' : (hasMeals || rec ? 'open' : 'none'));
+      var kind = mx ? 'sym' : (!first || d < first ? 'none' : d < today ? 'calm' : 'open');
       if (mx) withSym++;
       var p = d.split('-').map(Number), dt = new Date(p[0], p[1] - 1, p[2]);
-      var title = dayLabel(d) + ': ' + (mx ? syms.length + (syms.length === 1 ? ' sintoma' : ' sintomas') + ', maior intensidade ' + mx + ' de 10' : kind === 'calm' ? 'dia fechado sem sintomas' : kind === 'open' ? 'sem confirmação de sintomas' : 'sem registros');
+      var title = dayLabel(d) + ': ' + (mx ? syms.length + (syms.length === 1 ? ' sintoma' : ' sintomas') + ', maior intensidade ' + mx + ' de 10' : kind === 'calm' ? 'dia sem sintomas' : kind === 'open' ? 'hoje, sem sintomas até agora' : 'antes do primeiro registro');
       return h('div', { class: 'col' + (d === today ? ' is-today' : ''), title: title },
         h('div', { class: 'track' }, mx ? h('div', { class: 'bar', style: 'height:' + (mx * 10) + '%' }, h('span', { class: 'bar-val' }, String(mx))) : null),
         h('span', { class: 'mark ' + kind }),
@@ -1313,8 +1370,8 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
       h('div', { class: 'bars', role: 'img', 'aria-label': 'Intensidade máxima dos sintomas por dia, últimos 14 dias. ' + withSym + ' dias com sintomas.' }, cols),
       h('div', { class: 'legend' },
         h('span', null, h('i', { class: 'lg lg-bar' }), 'Intensidade máxima do dia'),
-        h('span', null, h('i', { class: 'lg calm' }), 'Fechado, sem sintomas'),
-        h('span', null, h('i', { class: 'lg open' }), 'Sem confirmação')));
+        h('span', null, h('i', { class: 'lg calm' }), 'Dia sem sintomas'),
+        h('span', null, h('i', { class: 'lg open' }), 'Hoje, em andamento')));
 
     /* Associação sintoma e refeições */
     var linked = state.symptoms.filter(function (s) { return (s.mealIds || []).some(mealById); }).sort(function (a, b) { return a.ts < b.ts ? 1 : -1; }).slice(0, 3);
@@ -1364,7 +1421,20 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
   }
   $('#qMeal').addEventListener('click', function () { goKind('meal'); });
   $('#qSym').addEventListener('click', function () { goKind('sym'); });
-  $('#qDay').addEventListener('click', function () { openDay(todayStr()); });
+  function toggleGroup(cat, checked, boxSel) {
+    if (checked) { var it = newItem(); it.cat = cat; mealDraft.push(it); }
+    else mealDraft = mealDraft.filter(function (i) { return i.cat !== cat; });
+    renderItems();
+    if (checked) { var inp = $(boxSel + ' .item:last-child input'); if (inp) inp.focus(); }
+  }
+  function addGroupItem(cat, boxSel) {
+    var it = newItem(); it.cat = cat; mealDraft.push(it); renderItems();
+    var inp = $(boxSel + ' .item:last-child input'); if (inp) inp.focus();
+  }
+  $('#mDessert').addEventListener('change', function () { toggleGroup('doce', this.checked, '#dessertItems'); });
+  $('#mDrink').addEventListener('change', function () { toggleGroup('bebida', this.checked, '#drinkItems'); });
+  $('#addDessert').addEventListener('click', function () { addGroupItem('doce', '#dessertItems'); });
+  $('#addDrink').addEventListener('click', function () { addGroupItem('bebida', '#drinkItems'); });
 
   var d0 = new Date();
   $('#todayDate').textContent = WD[d0.getDay()] + ', ' + pad(d0.getDate()) + '/' + pad(d0.getMonth() + 1);
