@@ -32,6 +32,8 @@
   --sage-line: #C9D5C0;
   --sand-soft: #F3ECD8;
   --sand-line: #E3D8B8;
+  --flame: #B9692A;
+  --flame-soft: #F7E7D6;
   --berry: #8A4659;
   --berry-bar: #B4768A;
   --berry-soft: #F4E5E9;
@@ -65,6 +67,8 @@
     --sage-line: #3A4D37;
     --sand-soft: #2B281C;
     --sand-line: #433E2A;
+    --flame: #E9A566;
+    --flame-soft: #3A2B1C;
     --berry: #E8A3B5;
     --berry-bar: #C27C90;
     --berry-soft: #38252B;
@@ -119,7 +123,7 @@ body:not(.authenticated) main { display: none; }
 #appStatus { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 2px 10px; font-size: 13px; color: var(--muted); }
 #logoutBtn { min-height: 32px; padding: 4px 2px; font-size: 13px; }
 
-.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); background: color-mix(in srgb, var(--surface) 90%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-top: 1px solid var(--line); }
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); background: color-mix(in srgb, var(--surface) 90%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-top: 1px solid var(--line); }
 .tabs button { display: grid; justify-items: center; align-content: center; gap: 3px; min-height: 54px; padding: 6px 2px; border: 0; border-radius: 14px; background: none; color: var(--muted); font-size: 12px; font-weight: 600; }
 .tabs button[aria-selected="true"] { background: var(--sage-soft); color: var(--olive-ink); }
 
@@ -138,6 +142,72 @@ section.tab { display: grid; gap: 20px; align-content: start; }
   .tabs button { display: flex; justify-content: flex-start; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; font-size: 15px; }
   .stage { padding: 52px 56px 72px; }
 }
+
+
+/* Ofensiva */
+#dsStreak { display: grid; }
+.streak { background: linear-gradient(160deg, var(--flame-soft), var(--surface) 62%); border: 1px solid var(--sand-line); border-radius: var(--r-lg); padding: 22px; display: grid; gap: 16px; box-shadow: var(--shadow); }
+.streak.skeleton { background: var(--surface); border-color: var(--line); }
+.streak-main { display: flex; align-items: center; gap: 16px; }
+.streak h2 { font: 400 26px/1.15 var(--font-display); letter-spacing: -.01em; }
+.streak h2 b { font-weight: 500; font-size: 1.5em; margin-right: 2px; }
+.streak .rec { color: var(--muted); font-size: 14px; margin-top: 2px; }
+.flame { width: 58px; height: 58px; border-radius: 20px; background: var(--flame); color: #FFF8EF; display: grid; place-items: center; flex: none; }
+.flame .ico { width: 30px; height: 30px; }
+.flame.off { background: var(--bg-2); color: var(--muted); border: 1px solid var(--line-2); }
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.wd { display: grid; justify-items: center; gap: 6px; }
+.wd-l { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: capitalize; }
+.dot { width: 34px; height: 34px; max-width: 100%; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid var(--line-2); color: var(--muted); }
+.dot .ico { width: 17px; height: 17px; stroke-width: 2.2; }
+.dot.done { background: var(--olive); border-color: var(--olive); color: var(--on-olive); }
+.dot.frozen { background: var(--sage-soft); border-color: var(--sage); color: var(--olive-ink); }
+.dot.now { box-shadow: 0 0 0 3px var(--flame-soft), 0 0 0 4.5px var(--flame); }
+.streak-msg { color: var(--ink) !important; font-weight: 600; font-size: 16px !important; }
+.freeze { display: flex; gap: 8px; align-items: flex-start; font-size: 14px !important; }
+.freeze .ico { width: 18px; height: 18px; flex: none; margin-top: 1px; }
+.freeze.on { color: var(--olive-ink) !important; }
+.streak .hint { font-size: 13px !important; }
+.streak .btn { justify-self: start; }
+.next { font-size: 15px !important; color: var(--ink-2) !important; }
+.ach-list { list-style: none; display: grid; gap: 10px; padding: 0; margin: 0; }
+.ach { display: flex; gap: 14px; padding: 14px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg); }
+.ach.on { background: var(--sage-soft); border-color: var(--sage-line); }
+.ach-ico { width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; background: var(--bg-2); color: var(--muted); flex: none; }
+.ach.on .ach-ico { background: var(--olive); color: var(--on-olive); }
+.ach-body { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.ach-body span, .ach-body small, .ach-body em { color: var(--muted); font-size: 13px; font-style: normal; }
+.ach-prog { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+.meter { flex: 1; height: 7px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--sage); border-radius: 99px; }
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cal-head .icon { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--surface); color: var(--ink); font-size: 20px; }
+.cal-head .icon:disabled { opacity: .35; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.cal-wd { text-align: center; font-size: 12px; font-weight: 600; color: var(--muted); padding-bottom: 2px; }
+.cal-day { aspect-ratio: 1; height: auto; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 600; color: var(--muted); border: 1.5px solid transparent; justify-self: center; width: 100%; max-width: 44px; }
+.cal-day.done { background: var(--olive); color: var(--on-olive); }
+.cal-day.frozen { background: var(--sage-soft); border-color: var(--sage); color: var(--olive-ink); }
+.cal-day.idle { background: var(--bg-2); }
+.cal-day.future { background: none; opacity: .5; }
+.cal-day.now { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--flame); }
+.cal-leg { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 14px; font-size: 13px; color: var(--muted); }
+.cal-leg span { display: inline-flex; align-items: center; gap: 6px; }
+.cal-leg .k { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--line-2); }
+.cal-leg .k.done { background: var(--olive); border-color: var(--olive); } .cal-leg .k.frozen { background: var(--sage-soft); border-color: var(--sage); } .cal-leg .k.idle { background: var(--bg-2); } .cal-leg .k.now { border-color: var(--flame); }
+.celebrate { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; background: rgba(20, 25, 18, .55); }
+.cel-card { position: relative; overflow: hidden; width: min(100%, 380px); background: var(--surface); border: 1px solid var(--line); border-radius: 28px; padding: 36px 28px 28px; display: grid; justify-items: center; gap: 10px; text-align: center; box-shadow: 0 30px 80px -20px rgba(0, 0, 0, .5); animation: celpop .45s cubic-bezier(.2, 1.3, .4, 1) both; }
+.cel-card h2 { font: 400 32px/1.1 var(--font-display); }
+.cel-card p { color: var(--muted); }
+.cel-card .cel-kicker { color: var(--flame); font-weight: 700; font-size: 14px; }
+.cel-card .btn { margin-top: 14px; min-width: 160px; }
+.cel-ico { width: 76px; height: 76px; border-radius: 26px; background: var(--flame); color: #FFF8EF; display: grid; place-items: center; }
+.cel-ico .ico { width: 40px; height: 40px; }
+.confetti { position: absolute; inset: 0; pointer-events: none; }
+.confetti i { position: absolute; top: -12px; width: 8px; height: 14px; border-radius: 2px; animation: confall 2s ease-in both; }
+@keyframes celpop { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes confall { to { transform: translateY(460px) rotate(540deg); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .cel-card, .confetti i { animation: none; } .confetti { display: none; } }
 
 /* Títulos */
 .page-head { display: grid; gap: 6px; padding: 8px 0 2px; }
@@ -432,6 +502,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
       <button role="tab" id="t-dash" aria-selected="true" data-tab="dash"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg><span>Resumo</span></button>
       <button role="tab" id="t-reg" aria-selected="false" data-tab="reg"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/></svg><span>Registrar</span></button>
       <button role="tab" id="t-hist" aria-selected="false" data-tab="hist"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span>Histórico</span></button>
+      <button role="tab" id="t-streak" aria-selected="false" data-tab="streak"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.5 3c.6 3.4-1.4 5-3 7S6.5 13.2 6.5 15.6A5.5 5.5 0 0 0 12 21.1a5.5 5.5 0 0 0 5.5-5.5c0-2.3-1.1-3.7-2.2-4.9-.3 1-.9 1.7-1.7 2 .4-3.2-.1-6.3-1.1-9.7z"/></svg><span>Ofensiva</span></button>
       <button role="tab" id="t-exp" aria-selected="false" data-tab="exp"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v10m0 0l-4-4m4 4l4-4"/><path d="M5 16v2.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V16"/></svg><span>Exportar</span></button>
     </nav>
     <div class="side-foot">
@@ -454,6 +525,8 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
           <button type="button" class="btn berry-soft" id="qSym"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h3.5l2.5-6 4 12 2.5-6H21"/></svg><span class="q-pre">Registrar </span><span class="q-cap">sintoma</span></button>
         </div>
       </header>
+
+      <div id="dsStreak"></div>
 
       <div class="tiles" id="dsStats"></div>
 
@@ -564,6 +637,18 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
         <p class="err" id="dErr" role="alert" hidden></p>
         <div class="actions"><button type="submit" class="btn primary" id="dSave">Salvar contexto</button></div>
       </form>
+    </section>
+
+    <section class="tab" id="tab-streak" role="tabpanel" aria-labelledby="t-streak" hidden>
+      <header class="page-head">
+        <h1>Ofensiva</h1>
+        <p>Cada dia com pelo menos uma refeição ou um sintoma registrado conta uma vez. A ofensiva é calculada pelo banco, a partir dos seus registros.</p>
+      </header>
+      <div class="tiles" id="stSum"></div>
+      <div class="grid2">
+        <article class="card"><div class="card-head"><h2>Conquistas</h2></div><div id="stAch"></div></article>
+        <article class="card"><div class="card-head"><h2>Calendário</h2></div><div id="stCal"></div></article>
+      </div>
     </section>
 
     <section class="tab" id="tab-hist" role="tabpanel" aria-labelledby="t-hist" hidden>
@@ -729,6 +814,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
     if (goneD.length) checkError(await sb.from('days').delete().eq('user_id',currentUser.id).in('date',goneD));
     remoteIds = { meals:mealIds, symptoms:symIds, days:dayDates, links:linkKeys };
     setStatus('Sincronizado com Supabase.');
+    refreshStreak();
   }
   async function loadCloudData() {
     isLoadingRemote = true;
@@ -753,7 +839,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
         await syncToSupabase(JSON.parse(JSON.stringify(state)));
         isLoadingRemote = true;
       }
-      resetMeal(); resetSym(); loadDay(todayStr()); renderAll();
+      resetMeal(); resetSym(); loadDay(todayStr()); renderAll(); refreshStreak();
       setStatus('Dados sincronizados com Supabase.');
     } finally { isLoadingRemote = false; }
   }
@@ -792,13 +878,14 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
 
   /* Abas */
   function go(tab) {
-    ['dash', 'reg', 'hist', 'exp'].forEach(function (t) {
+    ['dash', 'reg', 'hist', 'exp', 'streak'].forEach(function (t) {
       $('#tab-' + t).hidden = t !== tab;
       $('#t-' + t).setAttribute('aria-selected', String(t === tab));
     });
     if (tab === 'hist') renderHist();
     if (tab === 'exp') renderStats();
-    if (tab === 'dash') renderDash();
+    if (tab === 'dash') { renderDash(); renderStreak(); }
+    if (tab === 'streak') { renderStreakPage(); refreshStreak(); }
     if (tab === 'reg') renderToday();
     window.scrollTo(0, 0);
   }
@@ -1235,7 +1322,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
       (le ? 'Último backup em ' + le.slice(8, 10) + '/' + le.slice(5, 7) + ' às ' + le.slice(11, 16) + '.' : 'Nenhum backup feito ainda.');
   }
 
-  function renderAll() { renderDash(); renderToday(); renderNudge(); renderFoodList(); renderStats(); if (!$('#tab-hist').hidden) renderHist(); }
+  function renderAll() { renderDash(); renderStreak(); renderToday(); renderNudge(); renderFoodList(); renderStats(); if (!$('#tab-hist').hidden) renderHist(); }
 
   /* ===== Apresentação: resumo, gráfico e associação sintoma-refeição (somente leitura do estado) ===== */
   var ICONS = {
@@ -1436,6 +1523,188 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
   $('#addDessert').addEventListener('click', function () { addGroupItem('doce', '#dessertItems'); });
   $('#addDrink').addEventListener('click', function () { addGroupItem('bebida', '#drinkItems'); });
 
+  /* ===== Ofensiva: os números vêm do banco (rpc refresh_my_streak). O app só exibe; nada aqui grava a ofensiva. ===== */
+  var ACHIEVEMENTS = [
+    { code: 'primeiro_passo', name: 'Primeiro passo', need: 1, total: true, desc: '1 dia com registro' },
+    { code: 'consistente', name: 'Consistente', need: 3, desc: '3 dias consecutivos' },
+    { code: 'determinado', name: 'Determinado', need: 7, desc: '7 dias consecutivos' },
+    { code: 'dedicado', name: 'Dedicado', need: 30, desc: '30 dias consecutivos' },
+    { code: 'lenda', name: 'Lenda', need: 100, desc: '100 dias consecutivos' },
+    { code: 'inabalavel', name: 'Inabalável', need: 365, desc: '365 dias consecutivos' }
+  ];
+  var streakState = null, streakBusy = false, streakAgain = false, calMonth = '';
+  ICONS.flame = '<path d="M12.5 3c.6 3.4-1.4 5-3 7S6.5 13.2 6.5 15.6A5.5 5.5 0 0 0 12 21.1a5.5 5.5 0 0 0 5.5-5.5c0-2.3-1.1-3.7-2.2-4.9-.3 1-.9 1.7-1.7 2 .4-3.2-.1-6.3-1.1-9.7z"/><path d="M12 21.1a2.6 2.6 0 0 1-2.6-2.6c0-1.3.9-2.1 2.6-3.6 1.7 1.5 2.6 2.3 2.6 3.6a2.6 2.6 0 0 1-2.6 2.6z"/>';
+  ICONS.shield = '<path d="M12 3.5l7 2.5v5.5c0 4.2-2.8 7.4-7 9-4.2-1.6-7-4.8-7-9V6z"/><path d="M9 12l2 2 4-4"/>';
+  ICONS.check = '<path d="M5 12.5l4.5 4.5L19 7.5"/>';
+  ICONS.lock = '<rect x="5" y="10.5" width="14" height="9.5" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/>';
+  ICONS.trophy = '<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5v1.5A3 3 0 0 0 8 10.5M16 6h3v1.5a3 3 0 0 1-3 3"/><path d="M12 13v3.5M8.5 20h7M10 16.5h4"/>';
+
+  function activeDays() {
+    var set = {};
+    state.meals.forEach(function (m) { if (m.items && m.items.length) set[m.ts.slice(0, 10)] = 1; });
+    state.symptoms.forEach(function (s) { if (s.kinds && s.kinds.length) set[s.ts.slice(0, 10)] = 1; });
+    return set;
+  }
+  function streakReady() { return streakState && !streakState.error && currentUser && streakState.uid === currentUser.id; }
+  async function refreshStreak() {
+    if (!sb || !currentUser) return;
+    if (streakBusy) { streakAgain = true; return; }
+    streakBusy = true;
+    var uid = currentUser.id;
+    try {
+      var res = await sb.rpc('refresh_my_streak');
+      if (res.error) throw res.error;
+      streakState = res.data; streakState.uid = uid;
+      celebrateNew();
+    } catch (e) {
+      console.error('Ofensiva:', e);
+      if (!streakReady()) streakState = { error: true, uid: uid };
+    }
+    streakBusy = false; renderStreak();
+    if (streakAgain) { streakAgain = false; refreshStreak(); }
+  }
+  function streakMessage(s, doneToday) {
+    var cur = s.current_streak, yest = dateAdd(todayStr(), -1);
+    if (!s.total_active_days) return 'Faça seu primeiro registro e comece sua ofensiva.';
+    if ((s.frozen_dates || []).indexOf(yest) >= 0 && cur > 0) return 'Sua proteção foi utilizada para preservar sua ofensiva.';
+    if (cur === 0) return 'Vamos começar uma nova sequência?';
+    if (!doneToday) return 'Registre uma refeição ou seus sintomas de hoje para manter a sequência.';
+    if (cur === 1) return 'Você iniciou sua ofensiva! Continue assim!';
+    if (cur >= 7 && cur < 14) return 'Uma semana de acompanhamento! Parabéns!';
+    if (cur >= 3 && cur < 7) return cur + ' dias consecutivos! Você está criando um hábito!';
+    return 'Continue registrando suas refeições e sintomas para manter sua sequência!';
+  }
+  function dayStatus(d, s, act) {
+    if (act[d]) return 'done';
+    if ((s.frozen_dates || []).indexOf(d) >= 0) return 'frozen';
+    return d === todayStr() ? 'today' : 'idle';
+  }
+  function weekStrip(s, act) {
+    var today = todayStr(), strip = h('div', { class: 'week', role: 'list', 'aria-label': 'Últimos sete dias' });
+    for (var i = 6; i >= 0; i--) {
+      var d = dateAdd(today, -i), st = dayStatus(d, s, act), p = d.split('-').map(Number);
+      var lbl = new Date(p[0], p[1] - 1, p[2]).toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+      var dot = h('span', { class: 'dot ' + st + (d === today ? ' now' : '') });
+      if (st === 'done') dot.append(ico('check')); else if (st === 'frozen') dot.append(ico('shield'));
+      var txt = st === 'done' ? 'com registro' : st === 'frozen' ? 'protegido' : d === today ? 'hoje' : 'sem registro';
+      strip.append(h('div', { class: 'wd', role: 'listitem', 'aria-label': lbl + ', ' + txt }, h('span', { class: 'wd-l' }, lbl), dot));
+    }
+    return strip;
+  }
+  function freezeLine(s) {
+    if (s.freeze_available) return h('p', { class: 'freeze on' }, ico('shield'), h('span', null, 'Proteção disponível: um dia sem registro não quebra sua sequência.'));
+    var d = s.last_freeze_date ? shortDate(s.last_freeze_date) : '';
+    return h('p', { class: 'freeze' }, ico('shield'), h('span', null, 'Proteção usada' + (d ? ' em ' + d : '') + '. Ela volta depois de 7 dias com registro.'));
+  }
+  function renderStreak() {
+    var box = $('#dsStreak'); if (!box) return;
+    box.replaceChildren();
+    if (!currentUser) return;
+    if (!streakState || streakState.uid !== currentUser.id) { box.append(h('div', { class: 'streak skeleton' }, h('p', { class: 'card-sub' }, 'Carregando sua ofensiva…'))); }
+    else if (streakState.error) {
+      box.append(h('div', { class: 'streak' }, h('div', { class: 'streak-main' }, h('span', { class: 'flame off' }, ico('flame')), h('div', null, h('h2', null, 'Ofensiva indisponível'), h('p', null, 'Não foi possível carregar agora. Seus registros continuam salvos.'))), h('button', { type: 'button', class: 'btn', onclick: function () { refreshStreak(); } }, 'Tentar de novo')));
+    } else {
+      var s = streakState, act = activeDays(), cur = s.current_streak, doneToday = !!act[todayStr()];
+      box.append(h('div', { class: 'streak' },
+        h('div', { class: 'streak-main' },
+          h('span', { class: 'flame' + (cur > 0 ? '' : ' off') }, ico('flame')),
+          h('div', null,
+            h('h2', null, h('b', null, String(cur)), cur === 1 ? ' dia de ofensiva' : ' dias de ofensiva'),
+            h('p', { class: 'rec' }, 'Seu recorde: ' + s.longest_streak + (s.longest_streak === 1 ? ' dia' : ' dias')))),
+        weekStrip(s, act),
+        h('p', { class: 'streak-msg' }, streakMessage(s, doneToday)),
+        freezeLine(s),
+        h('p', { class: 'hint' }, 'Registre só o que realmente aconteceu. Dias sem registro não são um problema.'),
+        h('button', { type: 'button', class: 'btn', onclick: function () { go('streak'); } }, ico('trophy'), h('span', null, 'Conquistas e calendário'))));
+    }
+    if (!$('#tab-streak').hidden) renderStreakPage();
+  }
+  function nextAchievement(s) {
+    for (var i = 0; i < ACHIEVEMENTS.length; i++) {
+      var a = ACHIEVEMENTS[i], have = (s.achievements || []).some(function (x) { return x.code === a.code; });
+      if (!have) return a;
+    }
+    return null;
+  }
+  function progressOf(a, s) { return Math.min(a.total ? s.total_active_days : s.longest_streak, a.need); }
+  function renderStreakPage() {
+    var box = $('#stAch'), cal = $('#stCal'), sum = $('#stSum'); if (!box) return;
+    box.replaceChildren(); cal.replaceChildren(); sum.replaceChildren();
+    if (!streakReady()) { box.append(h('p', { class: 'card-sub' }, streakState && streakState.error ? 'Não foi possível carregar agora.' : 'Carregando…')); return; }
+    var s = streakState, got = {}; (s.achievements || []).forEach(function (x) { got[x.code] = x.unlocked_at; });
+    sum.append(statTile('', 'flame', 'Ofensiva atual', String(s.current_streak), s.current_streak === 1 ? 'dia' : 'dias'),
+      statTile('', 'trophy', 'Recorde', String(s.longest_streak), s.longest_streak === 1 ? 'dia' : 'dias'),
+      statTile('', 'calendar', 'Dias com registro', String(s.total_active_days), 'no total'),
+      statTile('', 'shield', 'Proteção', s.freeze_available ? 'Disponível' : 'Em uso', s.freeze_available ? 'um dia de folga' : 'volta após 7 dias', true));
+    var nx = nextAchievement(s);
+    if (nx) box.append(h('p', { class: 'next' }, 'Próxima conquista: ', h('b', null, nx.name), ' · faltam ' + (nx.need - progressOf(nx, s)) + (nx.need - progressOf(nx, s) === 1 ? ' dia' : ' dias')));
+    else box.append(h('p', { class: 'next' }, 'Você desbloqueou todas as conquistas.'));
+    var list = h('ul', { class: 'ach-list' });
+    ACHIEVEMENTS.forEach(function (a) {
+      var on = !!got[a.code], pr = progressOf(a, s);
+      list.append(h('li', { class: 'ach' + (on ? ' on' : '') },
+        h('span', { class: 'ach-ico' }, ico(on ? 'trophy' : 'lock')),
+        h('div', { class: 'ach-body' },
+          h('b', null, a.name), h('span', null, a.desc),
+          on ? h('em', null, 'Desbloqueada em ' + (function (u) { var d = new Date(u); return pad(d.getDate()) + '/' + pad(d.getMonth() + 1); })(got[a.code]))
+             : h('div', { class: 'ach-prog' }, h('div', { class: 'meter', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(a.need), 'aria-valuenow': String(pr), 'aria-label': 'Progresso em ' + a.name }, h('i', { style: 'width:' + Math.round(pr / a.need * 100) + '%' })), h('small', null, pr + ' de ' + a.need)))));
+    });
+    box.append(list);
+    cal.append(monthCalendar(s));
+  }
+  function monthCalendar(s) {
+    var today = todayStr(); if (!calMonth) calMonth = today.slice(0, 7);
+    var p = calMonth.split('-').map(Number), first = new Date(p[0], p[1] - 1, 1), nDays = new Date(p[0], p[1], 0).getDate();
+    var act = activeDays(), wrap = h('div', { class: 'cal' });
+    var title = first.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }); title = title.charAt(0).toUpperCase() + title.slice(1);
+    function move(n) { var q = new Date(p[0], p[1] - 1 + n, 1); calMonth = q.getFullYear() + '-' + pad(q.getMonth() + 1); renderStreakPage(); }
+    var atNow = calMonth >= today.slice(0, 7);
+    var prev = h('button', { type: 'button', class: 'icon', 'aria-label': 'Mês anterior', onclick: function () { move(-1); } }, '‹');
+    var next = h('button', { type: 'button', class: 'icon', 'aria-label': 'Próximo mês', onclick: function () { move(1); } }, '›'); next.disabled = atNow;
+    wrap.append(h('div', { class: 'cal-head' }, prev, h('b', null, title), next));
+    var grid = h('div', { class: 'cal-grid', role: 'grid', 'aria-label': title });
+    ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].forEach(function (l) { grid.append(h('span', { class: 'cal-wd', 'aria-hidden': 'true' }, l)); });
+    for (var i = 0; i < first.getDay(); i++) grid.append(h('span', { class: 'cal-pad', 'aria-hidden': 'true' }));
+    for (var d = 1; d <= nDays; d++) {
+      var ds = p[0] + '-' + pad(p[1]) + '-' + pad(d), st = dayStatus(ds, s, act);
+      if (st === 'today' && ds !== today) st = 'idle';
+      var cell = h('span', { class: 'cal-day ' + st + (ds === today ? ' now' : '') + (ds > today ? ' future' : ''), role: 'gridcell', 'aria-label': d + ', ' + (st === 'done' ? 'com registro' : st === 'frozen' ? 'protegido' : ds === today ? 'hoje' : 'sem registro') }, String(d));
+      grid.append(cell);
+    }
+    wrap.append(grid, h('div', { class: 'cal-leg' },
+      h('span', null, h('i', { class: 'k done' }), 'Com registro'), h('span', null, h('i', { class: 'k frozen' }), 'Protegido'), h('span', null, h('i', { class: 'k idle' }), 'Sem registro'), h('span', null, h('i', { class: 'k now' }), 'Hoje')));
+    return wrap;
+  }
+  function confettiBits() {
+    var box = h('div', { class: 'confetti', 'aria-hidden': 'true' }), cols = ['--olive', '--sage', '--berry-bar', '--sand-line'];
+    for (var i = 0; i < 26; i++) {
+      var b = h('i'); b.style.cssText = 'left:' + (Math.random() * 100) + '%;background:var(' + cols[i % 4] + ');animation-delay:' + (Math.random() * .5) + 's;animation-duration:' + (1.6 + Math.random() * 1.2) + 's;transform:rotate(' + Math.round(Math.random() * 180) + 'deg)';
+      box.append(b);
+    }
+    return box;
+  }
+  function celebrateNew() {
+    var key = 'prato-e-sintoma:seen:' + currentUser.id, seen = [];
+    try { seen = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) {}
+    var fresh = (streakState.achievements || []).filter(function (x) { return seen.indexOf(x.code) < 0; });
+    if (!fresh.length) return;
+    try { localStorage.setItem(key, JSON.stringify(seen.concat(fresh.map(function (x) { return x.code; })))); } catch (e) {}
+    var top = fresh.map(function (x) { return ACHIEVEMENTS.filter(function (a) { return a.code === x.code; })[0]; }).filter(Boolean).sort(function (a, b) { return b.need - a.need; })[0];
+    if (!top) return;
+    var old = $('#celebrate'); if (old) old.remove();
+    var close = function () { ov.remove(); };
+    var ov = h('div', { id: 'celebrate', class: 'celebrate', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'celTitle' },
+      h('div', { class: 'cel-card' }, confettiBits(),
+        h('span', { class: 'cel-ico' }, ico('trophy')),
+        h('p', { class: 'cel-kicker' }, 'Conquista desbloqueada'),
+        h('h2', { id: 'celTitle' }, top.name),
+        h('p', null, top.desc + (fresh.length > 1 ? '. E mais ' + (fresh.length - 1) + (fresh.length === 2 ? ' conquista.' : ' conquistas.') : '.')),
+        h('button', { type: 'button', class: 'btn primary', onclick: close }, 'Continuar')));
+    ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+    document.addEventListener('keydown', function esc(e) { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); } });
+    document.body.append(ov); ov.querySelector('button').focus();
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) refreshStreak(); });
   var d0 = new Date();
   $('#todayDate').textContent = WD[d0.getDay()] + ', ' + pad(d0.getDate()) + '/' + pad(d0.getMonth() + 1);
   resetMeal(); resetSym(); loadDay(todayStr()); renderAll();
